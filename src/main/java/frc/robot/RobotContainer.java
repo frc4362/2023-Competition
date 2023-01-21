@@ -70,4 +70,8 @@ public class RobotContainer {
         // An ExampleCommand will run in autonomous
         return new exampleAuto(s_Swerve);
     }
+
+    public Swerve getSwerve() {
+        return s_Swerve;
+    }
 }
