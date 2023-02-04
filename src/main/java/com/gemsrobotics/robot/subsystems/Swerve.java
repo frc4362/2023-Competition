@@ -47,6 +47,8 @@ public class Swerve extends SubsystemBase {
         Timer.delay(1.0);
         resetModulesToAbsolute();
 
+        m_fieldDisplay = new Field2d();
+
         // TODO tune the filter
         m_swervePoseEstimator = new SwerveDrivePoseEstimator(Constants.Swerve.swerveKinematics, getYaw(), getModulePositions(), new Pose2d());
     }
@@ -133,6 +135,7 @@ public class Swerve extends SubsystemBase {
         });
 
         m_fieldDisplay.setRobotPose(m_swervePoseEstimator.getEstimatedPosition());
+        SmartDashboard.putData(m_fieldDisplay);
 
         for (final var mod : m_swerveModules) {
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());

@@ -23,8 +23,8 @@ public final class Constants {
         public static final COTSFalconSwerveConstants chosenModule =  COTSFalconSwerveConstants.SwerveX();
 
         /* Drivetrain Constants */
-        public static final double trackWidth = Units.inchesToMeters(21.73); //: This must be tuned to specific robot
-        public static final double wheelBase = Units.inchesToMeters(21.73); //: This must be tuned to specific robot
+        public static final double trackWidth = Units.inchesToMeters(28.0); //: This must be tuned to specific robot
+        public static final double wheelBase = Units.inchesToMeters(28.0); //: This must be tuned to specific robot
         public static final double wheelCircumference = chosenModule.wheelCircumference;
 
         /* Swerve Kinematics 
