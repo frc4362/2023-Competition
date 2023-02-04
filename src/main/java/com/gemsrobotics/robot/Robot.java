@@ -4,6 +4,8 @@
 
 package com.gemsrobotics.robot;
 
+import com.gemsrobotics.lib.LimelightHelpers;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -81,6 +83,8 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    LimelightHelpers.setAlliance(DriverStation.getAlliance());
   }
 
   /** This function is called periodically during operator control. */

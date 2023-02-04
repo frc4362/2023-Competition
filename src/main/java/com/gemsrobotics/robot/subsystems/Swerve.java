@@ -8,7 +8,6 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 
 import com.ctre.phoenix.sensors.Pigeon2;
@@ -22,23 +21,25 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+import java.util.List;
+
 public class Swerve extends SubsystemBase {
     public SwerveDrivePoseEstimator m_swervePoseEstimator;
-    public SwerveModule[] m_swerveModules;
+    public List<SwerveModule> m_swerveModules;
     public Pigeon2 m_imu;
-    public Field2d m_field;
+    public Field2d m_fieldDisplay;
 
     public Swerve() {
         m_imu = new Pigeon2(Constants.Swerve.pigeonID);
         m_imu.configFactoryDefault();
         zeroGyro();
 
-        m_swerveModules = new SwerveModule[] {
+        m_swerveModules = List.of(
             new SwerveModule(0, Constants.Swerve.Mod0.constants),
             new SwerveModule(1, Constants.Swerve.Mod1.constants),
             new SwerveModule(2, Constants.Swerve.Mod2.constants),
             new SwerveModule(3, Constants.Swerve.Mod3.constants)
-        };
+        );
 
         /* By pausing init for a second before setting module offsets, we avoid a bug with inverting motors.
          * See https://github.com/Team364/BaseFalconSwerve/issues/8 for more info.
@@ -50,7 +51,12 @@ public class Swerve extends SubsystemBase {
         m_swervePoseEstimator = new SwerveDrivePoseEstimator(Constants.Swerve.swerveKinematics, getYaw(), getModulePositions(), new Pose2d());
     }
 
-    public void drive(Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop) {
+    public void drive(
+            final Translation2d translation,
+            final double rotation,
+            final boolean fieldRelative,
+            final boolean isOpenLoop
+    ) {
         SwerveModuleState[] swerveModuleStates =
             Constants.Swerve.swerveKinematics.toSwerveModuleStates(
                 fieldRelative ? ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -72,7 +78,7 @@ public class Swerve extends SubsystemBase {
     }    
 
     /* Used by SwerveControllerCommand in Auto */
-    public void setModuleStates(SwerveModuleState[] desiredStates) {
+    public void setModuleStates(final SwerveModuleState[] desiredStates) {
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.maxSpeed);
         
         for (final var mod : m_swerveModules) {
@@ -84,7 +90,7 @@ public class Swerve extends SubsystemBase {
         return m_swervePoseEstimator.getEstimatedPosition();
     }
 
-    public void resetOdometry(Pose2d pose) {
+    public void resetOdometry(final Pose2d pose) {
         m_swervePoseEstimator.resetPosition(getYaw(), getModulePositions(), pose);
     }
 
@@ -126,7 +132,7 @@ public class Swerve extends SubsystemBase {
             m_swervePoseEstimator.addVisionMeasurement(measurement, Timer.getFPGATimestamp() - imageCaptureTime);
         });
 
-        m_field.setRobotPose(m_swervePoseEstimator.getEstimatedPosition());
+        m_fieldDisplay.setRobotPose(m_swervePoseEstimator.getEstimatedPosition());
 
         for (final var mod : m_swerveModules) {
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
