@@ -1,4 +1,4 @@
-package frc.robot;
+package com.gemsrobotics.robot;
 
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
