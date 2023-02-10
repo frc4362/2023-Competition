@@ -276,6 +276,14 @@ public class LimelightHelpers {
 				new Rotation3d(raw[3], raw[4], raw[5]));
 	}
 
+	public static Optional<Pose3d> maybeMakePose3d(final double raw[]) {
+		if (raw.length > 0) {
+			return Optional.of(makePose3d(raw));
+		} else {
+			return Optional.empty();
+		}
+	}
+
 	public static NetworkTable getLimelightNTTable(final String tableName) {
 		return NetworkTableInstance.getDefault().getTable(sanitizeName(tableName));
 	}
@@ -346,42 +354,42 @@ public class LimelightHelpers {
 		return getLimelightNTString(limelightName, "json");
 	}
 
-	public static Pose3d getBotpose(final String limelightName) {
-		return makePose3d(getLimelightNTDoubleArray(limelightName, "botpose"));
+	public static Optional<Pose3d> getBotpose(final String limelightName) {
+		return maybeMakePose3d(getLimelightNTDoubleArray(limelightName, "botpose"));
 	}
 
-	public static Pose3d getBotpose_wpiRed(final String limelightName) {
-		return makePose3d(getLimelightNTDoubleArray(limelightName, "botpose_wpired"));
+	public static Optional<Pose3d> getBotpose_wpiRed(final String limelightName) {
+		return maybeMakePose3d(getLimelightNTDoubleArray(limelightName, "botpose_wpired"));
 	}
 
-	public static Pose3d getBotpose_wpiBlue(final String limelightName) {
-		return makePose3d(getLimelightNTDoubleArray(limelightName, "botpose_wpiblue"));
+	public static Optional<Pose3d> getBotpose_wpiBlue(final String limelightName) {
+		return maybeMakePose3d(getLimelightNTDoubleArray(limelightName, "botpose_wpiblue"));
 	}
 
 	public static Optional<Pose3d> getBotpose_wpiAlliance(final String limelightName) {
 		if (alliance == DriverStation.Alliance.Red) {
-			return Optional.of(getBotpose_wpiRed(limelightName));
+			return getBotpose_wpiRed(limelightName);
 		} else if (alliance == DriverStation.Alliance.Blue) {
-			return Optional.of(getBotpose_wpiBlue(limelightName));
+			return getBotpose_wpiBlue(limelightName);
 		} else {
 			return Optional.empty();
 		}
 	}
 
-	public static Pose3d getBotPose_TargetSpace(final String limelightName) {
-		return makePose3d(getLimelightNTDoubleArray(limelightName, "botpose_targetSpace"));
+	public static Optional<Pose3d> getBotPose_TargetSpace(final String limelightName) {
+		return maybeMakePose3d(getLimelightNTDoubleArray(limelightName, "botpose_targetSpace"));
 	}
 
-	public static Pose3d getCameraPose_TargetSpace(final String limelightName) {
-		return makePose3d(getLimelightNTDoubleArray(limelightName, "camerapose_targetspace"));
+	public static Optional<Pose3d> getCameraPose_TargetSpace(final String limelightName) {
+		return maybeMakePose3d(getLimelightNTDoubleArray(limelightName, "camerapose_targetspace"));
 	}
 
-	public static Pose3d getTargetPose_CameraSpace(final String limelightName) {
-		return makePose3d(getLimelightNTDoubleArray(limelightName, "targetpose_cameraspace"));
+	public static Optional<Pose3d> getTargetPose_CameraSpace(final String limelightName) {
+		return maybeMakePose3d(getLimelightNTDoubleArray(limelightName, "targetpose_cameraspace"));
 	}
 
-	public static Pose3d getTargetPose_RobotSpace(final String limelightName){
-		return makePose3d(getLimelightNTDoubleArray(limelightName, "targetpose_robotspace"));
+	public static Optional<Pose3d> getTargetPose_RobotSpace(final String limelightName){
+		return maybeMakePose3d(getLimelightNTDoubleArray(limelightName, "targetpose_robotspace"));
 	}
 
 	public static double[] getTargetColor(final String limelightName) {
