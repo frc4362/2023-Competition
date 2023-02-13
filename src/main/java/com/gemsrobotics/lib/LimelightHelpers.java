@@ -3,6 +3,7 @@ package com.gemsrobotics.lib;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -273,7 +274,7 @@ public class LimelightHelpers {
 	public static Pose3d makePose3d(final double[] raw) {
 		return new Pose3d(
 				new Translation3d(raw[0], raw[1], raw[2]),
-				new Rotation3d(raw[3], raw[4], raw[5]));
+				new Rotation3d(Units.degreesToRadians(raw[3]), Units.degreesToRadians(raw[4]), Units.degreesToRadians(raw[5])));
 	}
 
 	public static Optional<Pose3d> maybeMakePose3d(final double raw[]) {
