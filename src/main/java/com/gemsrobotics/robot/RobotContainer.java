@@ -30,18 +30,18 @@ public class RobotContainer {
     private final JoystickButton robotCentric = new JoystickButton(driver, XboxController.Button.kLeftBumper.value);
 
     /* Subsystems */
-    private final Swerve s_Swerve = new Swerve();
+    private final Swerve m_swerve = new Swerve();
 
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
-        s_Swerve.setDefaultCommand(
+        m_swerve.setDefaultCommand(
             new TeleopSwerve(
-                s_Swerve, 
+                    m_swerve,
                 () -> -driver.getRawAxis(translationAxis), 
                 () -> -driver.getRawAxis(strafeAxis), 
                 () -> -driver.getRawAxis(rotationAxis), 
-                () -> robotCentric.getAsBoolean()
+                robotCentric::getAsBoolean
             )
         );
 
@@ -57,7 +57,7 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         /* Driver Buttons */
-        zeroGyro.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
+        zeroGyro.onTrue(new InstantCommand(m_swerve::zeroGyro));
     }
 
     /**
@@ -67,10 +67,10 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         // An ExampleCommand will run in autonomous
-        return new exampleAuto(s_Swerve);
+        return new TestAuto(m_swerve);
     }
 
     public Swerve getSwerve() {
-        return s_Swerve;
+        return m_swerve;
     }
 }
