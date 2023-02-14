@@ -19,6 +19,8 @@ public class TeleopSwerve extends CommandBase {
     private DoubleSupplier rotationSup;
     private BooleanSupplier robotCentricSup;
     private SlewRateLimiter translationFilter;
+    private SlewRateLimiter strafeFilter;
+    private SlewRateLimiter rotationFilter;
 
     public TeleopSwerve(Swerve s_Swerve, DoubleSupplier translationSup, DoubleSupplier strafeSup, DoubleSupplier rotationSup, BooleanSupplier robotCentricSup) {
         this.s_Swerve = s_Swerve;
@@ -28,7 +30,9 @@ public class TeleopSwerve extends CommandBase {
         this.strafeSup = strafeSup;
         this.rotationSup = rotationSup;
         this.robotCentricSup = robotCentricSup;
-        this.translationFilter = new SlewRateLimiter(5);
+        this.translationFilter = new SlewRateLimiter(10);
+        this.strafeFilter = new SlewRateLimiter(10);
+        this.rotationFilter = new SlewRateLimiter(5);
     }
 
     @Override
@@ -38,12 +42,13 @@ public class TeleopSwerve extends CommandBase {
         double strafeVal = MathUtil.applyDeadband(strafeSup.getAsDouble(), Constants.stickDeadband);
         double rotationVal = Math.copySign(Math.pow(MathUtil.applyDeadband(rotationSup.getAsDouble(), Constants.stickDeadband), 2), rotationSup.getAsDouble());
 
-        var input2d = new Translation2d(translationVal, strafeVal);
-        input2d = input2d.times(translationFilter.calculate(input2d.getNorm()));
-
+        translationVal = translationFilter.calculate(translationVal);
+        strafeVal = translationFilter.calculate(strafeVal);
+        rotationVal = translationFilter.calculate(rotationVal);
+        
         /* Drive */
         s_Swerve.drive(
-            input2d.times(Constants.Swerve.maxSpeed),
+            new Translation2d(translationVal, strafeVal).times(Constants.Swerve.maxSpeed),
             rotationVal * Constants.Swerve.maxAngularVelocity, 
             !robotCentricSup.getAsBoolean(), 
             true
