@@ -46,7 +46,4 @@ public class Elevator extends SubsystemBase {
         mStage.set(ControlMode.Position, 0.0);
         mPivot.set(ControlMode.Position, 0.0);
     }
-           
-    
 }
-

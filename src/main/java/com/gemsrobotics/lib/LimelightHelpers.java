@@ -339,6 +339,9 @@ public class LimelightHelpers {
 		return getLimelightNTDouble(limelightName, "ta");
 	}
 
+	public static double getLatency_Cl(final String limelightName) {
+		return getLimelightNTDouble(limelightName, "cl");
+	}
 	public static double getLatency_Pipeline(final String limelightName) {
 		return getLimelightNTDouble(limelightName, "tl");
 	}

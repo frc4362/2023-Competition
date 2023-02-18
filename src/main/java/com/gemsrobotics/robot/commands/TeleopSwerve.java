@@ -30,9 +30,9 @@ public class TeleopSwerve extends CommandBase {
         this.strafeSup = strafeSup;
         this.rotationSup = rotationSup;
         this.robotCentricSup = robotCentricSup;
-        this.translationFilter = new SlewRateLimiter(10);
-        this.strafeFilter = new SlewRateLimiter(10);
-        this.rotationFilter = new SlewRateLimiter(5);
+        this.translationFilter = new SlewRateLimiter(3);
+        this.strafeFilter = new SlewRateLimiter(3);
+        this.rotationFilter = new SlewRateLimiter(3);
     }
 
     @Override
@@ -43,8 +43,8 @@ public class TeleopSwerve extends CommandBase {
         double rotationVal = Math.copySign(Math.pow(MathUtil.applyDeadband(rotationSup.getAsDouble(), Constants.stickDeadband), 2), rotationSup.getAsDouble());
 
         translationVal = translationFilter.calculate(translationVal);
-        strafeVal = translationFilter.calculate(strafeVal);
-        rotationVal = translationFilter.calculate(rotationVal);
+        strafeVal = strafeFilter.calculate(strafeVal);
+        rotationVal = rotationFilter.calculate(rotationVal);
         
         /* Drive */
         s_Swerve.drive(

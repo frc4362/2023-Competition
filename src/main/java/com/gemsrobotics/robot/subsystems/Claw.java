@@ -7,10 +7,10 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 
-public class claw extends SubsystemBase{
+public class Claw extends SubsystemBase{
     public TalonFX pincher;
     public TalonFX wrist;
-    public claw(int pincherModuleNum, int wristModuleNum){
+    public Claw(int pincherModuleNum, int wristModuleNum){
         pincher = new TalonFX(pincherModuleNum);
         wrist = new TalonFX(wristModuleNum);
     }

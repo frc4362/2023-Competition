@@ -5,18 +5,19 @@ import com.gemsrobotics.robot.SwerveModule;
 import com.gemsrobotics.robot.Constants;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.*;
 
 import com.ctre.phoenix.sensors.Pigeon2;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import java.nio.file.Path;
 import java.util.List;
 
 public class Swerve extends SubsystemBase {
@@ -51,7 +52,9 @@ public class Swerve extends SubsystemBase {
                 Constants.Swerve.swerveKinematics,
                 getYaw(),
                 getModulePositions(),
-                new Pose2d(new Translation2d(3, 7), Rotation2d.fromDegrees(0)));
+                new Pose2d(new Translation2d(3, 7), Rotation2d.fromDegrees(0)),
+                VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
+                VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10)));
     }
 
     public void drive(
@@ -134,17 +137,20 @@ public class Swerve extends SubsystemBase {
         if (Constants.Features.DO_VISION_FILTER) {
             LimelightHelpers.getBotpose_wpiAlliance("").map(Pose3d::toPose2d).ifPresent(measurement -> {
                 if (m_swervePoseEstimator.getEstimatedPosition().getTranslation().getDistance(measurement.getTranslation()) < Constants.VISION_OUTLIER_DISTANCE) {
-                    final var imageCaptureTime = LimelightHelpers.getLatency_Pipeline("");
-                    m_swervePoseEstimator.addVisionMeasurement(measurement, Timer.getFPGATimestamp() - imageCaptureTime);
+                    final var imageCaptureTime = LimelightHelpers.getLatency_Cl("") / 1_000.0;
+                    final var imageProcessTime = LimelightHelpers.getLatency_Pipeline("") / 1_000.0;
+                    m_swervePoseEstimator.addVisionMeasurement(
+                            measurement,
+                            Timer.getFPGATimestamp() - (imageCaptureTime + imageProcessTime));
                 }
             });
         }
 
         // TODO does this even show up on the map at all lol
-        final var FIELD = new Translation2d(16.4592, 8.2296);
+        final var FIELD = new Translation2d(15.980, 8.21);
         final var estimated = m_swervePoseEstimator.getEstimatedPosition();
-        final var fixedPose = new Pose2d(FIELD.minus(estimated.getTranslation()), estimated.getRotation());
-        m_fieldDisplay.setRobotPose(fixedPose);
+        final var fixedPose = FIELD.minus(estimated.getTranslation());
+        m_fieldDisplay.setRobotPose(new Pose2d(fixedPose, estimated.getRotation().rotateBy(Rotation2d.fromDegrees(180))));
 
         SmartDashboard.putNumber("Yaw", m_imu.getYaw());
         for (final var mod : m_swerveModules) {

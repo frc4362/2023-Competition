@@ -9,11 +9,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="50ea4c7c-ab0b-495a-883e-0242ef994adf" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/discord.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/data/CachedBoolean.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/data/CachedValue.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/drivers/GemTalon.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/drivers/MotorControllerGroup.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/util/TalonUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/util/Units.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/commands/AdaptivePurePursuitCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/LimelightHelpers.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/LimelightHelpers.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/drivers/MotorController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/drivers/MotorController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/drivers/MotorControllerFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/lib/drivers/MotorControllerFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/Constants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/Constants.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/commands/TeleopSwerve.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/commands/TeleopSwerve.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/subsystems/Elevator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/subsystems/Elevator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/subsystems/Swerve.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/subsystems/Swerve.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/subsystems/claw.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/gemsrobotics/robot/subsystems/Claw.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,6 +76,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="jar://$PROJECT_DIR$/../../../../Public/wpilib/2023/maven/edu/wpi/first/wpimath/wpimath-java/2023.1.1/wpimath-java-2023.1.1-sources.jar!/edu/wpi/first/math/estimator/SwerveDrivePoseEstimator.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../../Public/wpilib/2023/maven/edu/wpi/first/wpimath/wpimath-java/2023.1.1/wpimath-java-2023.1.1-sources.jar!/edu/wpi/first/math/geometry/Pose3d.java" root0="SKIP_INSPECTION" />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -81,9 +98,10 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ToolWindowRun.ShowToolbar": "false",
     "WebServerToolWindowFactoryState": "false",
     "dart.analysis.tool.window.visible": "false",
-    "last_opened_file_path": "C:/Users/ejmal/Documents/GitHub/2023-Competition",
+    "last_opened_file_path": "C:/Users/ejmal/Documents/GitHub/2023-Competition/src/main/java/com/gemsrobotics/lib/drivers",
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.0",
@@ -93,6 +111,16 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\ejmal\Documents\GitHub\2023-Competition\src\main\java\com\gemsrobotics\lib\drivers" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\ejmal\Documents\GitHub\2023-Competition\src\main\java\com\gemsrobotics\lib\util" />
+      <recent name="C:\Users\ejmal\Documents\GitHub\2023-Competition\src\main\java\com\gemsrobotics\lib\data" />
+      <recent name="C:\Users\ejmal\Documents\GitHub\2023-Competition\pipelines\fiducial" />
+    </key>
+  </component>
   <component name="RunManager" selected="Gradle.2023-Competition [deploy]">
     <configuration name="2023-Competition [dependencies]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>

@@ -5,96 +5,11 @@ import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
-//import com.gemsrobotics.frc2022.drivers.CursedClimbGemTalon;
-import com.revrobotics.REVLibError;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel;
-import edu.wpi.first.wpilibj.DriverStation;
 
 public final class MotorControllerFactory {
     private static final int TIMEOUT_MS = 100;
 
     private MotorControllerFactory() { }
-
-    public static class SparkConfiguration {
-        public boolean BURN_FACTORY_DEFAULT_FLASH;
-        public IdleMode IDLE_MODE;
-        public boolean INVERTED;
-
-        public int STATUS_FRAME_0_RATE_MS;
-        public int STATUS_FRAME_1_RATE_MS;
-        public int STATUS_FRAME_2_RATE_MS;
-
-        public double OPEN_LOOP_RAMP_RATE;
-        public double CLOSED_LOOP_RAMP_RATE;
-
-        public boolean ENABLE_VOLTAGE_COMPENSATION;
-        public double NOMINAL_VOLTAGE;
-    }
-
-    public static final SparkConfiguration DEFAULT_SPARK_CONFIG = new SparkConfiguration() {
-        {
-             BURN_FACTORY_DEFAULT_FLASH = false;
-             IDLE_MODE = IdleMode.kCoast;
-             INVERTED = false;
-             STATUS_FRAME_0_RATE_MS = 10;
-             STATUS_FRAME_1_RATE_MS = 1000;
-             STATUS_FRAME_2_RATE_MS = 1000;
-             OPEN_LOOP_RAMP_RATE = 0.0;
-             CLOSED_LOOP_RAMP_RATE = 0.0;
-             ENABLE_VOLTAGE_COMPENSATION = false;
-             NOMINAL_VOLTAGE = 12.0;
-        }
-    };
-
-    private static final SparkConfiguration SLAVE_SPARK_CONFIG = new SparkConfiguration() {
-        {
-            BURN_FACTORY_DEFAULT_FLASH = false;
-            IDLE_MODE = IdleMode.kCoast;
-            INVERTED = false;
-            STATUS_FRAME_0_RATE_MS = 1000;
-            STATUS_FRAME_1_RATE_MS = 1000;
-            STATUS_FRAME_2_RATE_MS = 1000;
-            OPEN_LOOP_RAMP_RATE = 0.0;
-            CLOSED_LOOP_RAMP_RATE = 0.0;
-            ENABLE_VOLTAGE_COMPENSATION = false;
-            NOMINAL_VOLTAGE = 12.0;
-        }
-    };
-
-    private static void handleCANError(final int id, final REVLibError error, final String message) {
-        if (error != REVLibError.kOk) {
-            DriverStation.reportError("Could not configure spark id: " + id + " error: " + error.toString() + " " + message, false);
-        }
-    }
-
-    public static GemSparkMax createDefaultSparkMax(final int port) {
-        return createSparkMax(port, DEFAULT_SPARK_CONFIG);
-    }
-
-    public static GemSparkMax createSparkMax(final int port, final SparkConfiguration config) {
-        final CANSparkMax sparkMax = new CANSparkMax(port, CANSparkMaxLowLevel.MotorType.kBrushless);
-
-        sparkMax.setCANTimeout(200);
-
-        handleCANError(port, sparkMax.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, config.STATUS_FRAME_0_RATE_MS), "set status0 rate");
-        handleCANError(port, sparkMax.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus1, config.STATUS_FRAME_1_RATE_MS), "set status1 rate");
-        handleCANError(port, sparkMax.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus2, config.STATUS_FRAME_2_RATE_MS), "set status2 rate");
-
-        handleCANError(port, sparkMax.setIdleMode(config.IDLE_MODE), "set neutral");
-        sparkMax.setInverted(config.INVERTED);
-        handleCANError(port, sparkMax.setOpenLoopRampRate(config.OPEN_LOOP_RAMP_RATE), "set open loop ramp");
-        handleCANError(port, sparkMax.setClosedLoopRampRate(config.CLOSED_LOOP_RAMP_RATE), "set closed loop ramp");
-
-        if (config.ENABLE_VOLTAGE_COMPENSATION) {
-            handleCANError(port, sparkMax.enableVoltageCompensation(config.NOMINAL_VOLTAGE), "voltage compensation");
-        } else {
-            handleCANError(port, sparkMax.disableVoltageCompensation(), "voltage compensation");
-        }
-
-        return new GemSparkMax(sparkMax);
-    }
 
     public static class TalonConfiguration {
         public NeutralMode NEUTRAL_MODE;
@@ -374,12 +289,5 @@ public final class MotorControllerFactory {
 
     public static GemTalon<TalonFX> createHighPerformanceTalonFX(final int port) {
         return createTalonFX(port, HIGH_PERFORMANCE_TALON_CONFIG, false);
-    }
-
-    public static CursedClimbGemTalon createCursedTalonFX(final int port) {
-        final var talon = new TalonFX(port);
-        configureTalon(talon, DEFAULT_TALON_CONFIG);
-        talon.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, TIMEOUT_MS);
-        return new CursedClimbGemTalon(talon, false);
     }
 }
