@@ -21,8 +21,7 @@ public class GemTalon<TalonType extends BaseTalon> implements MotorController<Ta
 	private static final int
 			MAX_TRIES = 3,
 			TIMEOUT_MS = 50;
-
-	private final String m_name;
+	private final String m_name, m_bus;
 	private final TalonType m_internal;
 	private final boolean m_isFX;
 	private final CachedBoolean m_isEncoderPresent;
@@ -38,14 +37,15 @@ public class GemTalon<TalonType extends BaseTalon> implements MotorController<Ta
 	private boolean m_isMotionProfilingConfigured;
 	private MotorController<TalonType> m_leader;
 
-	protected GemTalon(final TalonType talon, final boolean isSlave) {
+	protected GemTalon(final TalonType talon, final String bus, final boolean isSlave) {
 		m_internal = talon;
 		m_internal.enableVoltageCompensation(true);
 		runWithRetries(() -> m_internal.configVoltageCompSaturation(12.0, TIMEOUT_MS));
 
 		m_isFX = m_internal instanceof TalonFX;
 
-		m_name = "Talon" + (m_isFX ? "FX" : "SRX") + "-" + (isSlave ? "Slave-" : "") + m_internal.getDeviceID();
+		m_bus = bus;
+		m_name = "Talon" + (m_isFX ? "FX" : "SRX") + "@" + m_bus + "-" + (isSlave ? "Slave-" : "") + m_internal.getDeviceID();
 
 		if (m_isFX) {
 			m_isEncoderPresent = new CachedBoolean(Double.POSITIVE_INFINITY, () -> true);
@@ -65,8 +65,8 @@ public class GemTalon<TalonType extends BaseTalon> implements MotorController<Ta
 		m_lastDemand = Double.NaN;
 	}
 
-	public GemTalon(final TalonType talon) {
-		this(talon, false);
+	public GemTalon(final TalonType talon, final String bus) {
+		this(talon, bus,false);
 	}
 
 	@Override

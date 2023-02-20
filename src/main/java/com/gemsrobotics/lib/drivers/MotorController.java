@@ -90,6 +90,11 @@ public interface MotorController<T> {
         return setGearingParameters(new GearingParameters(reduction, cylinderRadiusMeters, encoderCountsPerRevolution));
     }
 
+    default boolean setGearingParameters(final double reduction, final double cylinderRadiusMeters) {
+        // assume 2048 counts per revolution on TalonFX integrated encoder
+        return setGearingParameters(reduction, cylinderRadiusMeters, 2048.0);
+    }
+
     /**
      * @param position Forces the encoder to set its current position
      * @return If the operation was successful

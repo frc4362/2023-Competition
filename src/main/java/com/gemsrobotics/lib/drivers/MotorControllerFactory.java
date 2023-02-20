@@ -8,6 +8,7 @@ import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 
 public final class MotorControllerFactory {
     private static final int TIMEOUT_MS = 100;
+    public static final String DEFAULT_BUS = "rio";
 
     private MotorControllerFactory() { }
 
@@ -67,97 +68,6 @@ public final class MotorControllerFactory {
 
              OPEN_LOOP_RAMP_RATE = 0.0;
              CLOSED_LOOP_RAMP_RATE = 0.0;
-        }
-    };
-
-    public static final TalonConfiguration HOOD_TALON_CONFIG = new TalonConfiguration() {
-        {
-             NEUTRAL_MODE = NeutralMode.Brake;
-             NEUTRAL_DEADBAND = 0.02;
-
-             ENABLE_CURRENT_LIMIT = false;
-             ENABLE_SOFT_LIMIT = true;
-             ENABLE_LIMIT_SWITCH = false;
-             FORWARD_SOFT_LIMIT = 0;
-             REVERSE_SOFT_LIMIT = 0;
-
-             INVERTED = false;
-             SENSOR_PHASE = false;
-
-             CONTROL_FRAME_PERIOD_MS = 10;
-             MOTION_CONTROL_FRAME_PERIOD_MS = 100;
-             GENERAL_STATUS_FRAME_RATE_MS = 10;
-             FEEDBACK_STATUS_FRAME_RATE_MS = 20;
-             QUAD_ENCODER_STATUS_FRAME_RATE_MS = 255;
-             ANALOG_TEMP_VBAT_STATUS_FRAME_RATE_MS = 255;
-             PULSE_WIDTH_STATUS_FRAME_RATE_MS = 255;
-
-             VELOCITY_MEASUREMENT_PERIOD = SensorVelocityMeasPeriod.Period_10Ms;
-             VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW = 4;
-
-             OPEN_LOOP_RAMP_RATE = 0.0;
-             CLOSED_LOOP_RAMP_RATE = 0.0;
-        }
-    };
-
-
-    private static final TalonConfiguration DRIVE_TALON = new TalonConfiguration() {
-        {
-            NEUTRAL_MODE = NeutralMode.Brake;
-            NEUTRAL_DEADBAND = 0.04;
-
-            ENABLE_CURRENT_LIMIT = false;
-            ENABLE_SOFT_LIMIT = false;
-            ENABLE_LIMIT_SWITCH = false;
-            FORWARD_SOFT_LIMIT = 0;
-            REVERSE_SOFT_LIMIT = 0;
-
-            INVERTED = false;
-            SENSOR_PHASE = false;
-
-            CONTROL_FRAME_PERIOD_MS = 10;
-            MOTION_CONTROL_FRAME_PERIOD_MS = 100;
-            GENERAL_STATUS_FRAME_RATE_MS = 10;
-            FEEDBACK_STATUS_FRAME_RATE_MS = 20;
-            QUAD_ENCODER_STATUS_FRAME_RATE_MS = 255;
-            ANALOG_TEMP_VBAT_STATUS_FRAME_RATE_MS = 255;
-            PULSE_WIDTH_STATUS_FRAME_RATE_MS = 255;
-
-            VELOCITY_MEASUREMENT_PERIOD = SensorVelocityMeasPeriod.Period_25Ms;
-            VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW = 8;
-
-            OPEN_LOOP_RAMP_RATE = 0.0;
-            CLOSED_LOOP_RAMP_RATE = 0.0;
-        }
-    };
-
-    public static final TalonConfiguration HIGH_PERFORMANCE_TALON_CONFIG = new TalonConfiguration() {
-        {
-            NEUTRAL_MODE = NeutralMode.Coast;
-            NEUTRAL_DEADBAND = 0.02;
-
-            ENABLE_CURRENT_LIMIT = false;
-            ENABLE_SOFT_LIMIT = false;
-            ENABLE_LIMIT_SWITCH = false;
-            FORWARD_SOFT_LIMIT = 0;
-            REVERSE_SOFT_LIMIT = 0;
-
-            INVERTED = false;
-            SENSOR_PHASE = false;
-
-            CONTROL_FRAME_PERIOD_MS = 5;
-            MOTION_CONTROL_FRAME_PERIOD_MS = 100;
-            GENERAL_STATUS_FRAME_RATE_MS = 5;
-            FEEDBACK_STATUS_FRAME_RATE_MS = 10;
-            QUAD_ENCODER_STATUS_FRAME_RATE_MS = 255;
-            ANALOG_TEMP_VBAT_STATUS_FRAME_RATE_MS = 255;
-            PULSE_WIDTH_STATUS_FRAME_RATE_MS = 255;
-
-            VELOCITY_MEASUREMENT_PERIOD = SensorVelocityMeasPeriod.Period_10Ms;
-            VELOCITY_MEASUREMENT_ROLLING_AVERAGE_WINDOW = 32;
-
-            OPEN_LOOP_RAMP_RATE = 0.0;
-            CLOSED_LOOP_RAMP_RATE = 0.0;
         }
     };
 
@@ -234,14 +144,6 @@ public final class MotorControllerFactory {
         talon.enableVoltageCompensation(false);
         talon.configVoltageCompSaturation(0.0, TIMEOUT_MS);
         talon.configVoltageMeasurementFilter(32, TIMEOUT_MS);
-//
-//        if (talon instanceof TalonSRX) {
-//            talon.changeMotionControlFramePeriod(config.MOTION_CONTROL_FRAME_PERIOD_MS);
-//            talon.clearMotionProfileHasUnderrun(TIMEOUT_MS);
-//            talon.clearMotionProfileTrajectories();
-//
-//            ((TalonSRX) talon).enableCurrentLimit(false);
-//        }
 
         talon.configIntegratedSensorInitializationStrategy(SensorInitializationStrategy.BootToZero, TIMEOUT_MS);
 
@@ -254,40 +156,18 @@ public final class MotorControllerFactory {
         talon.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS);
     }
 
-//    private static GemTalon<TalonSRX> createTalonSRX(final int port, final TalonConfiguration config, final boolean isSlave) {
-//        final var talon = new TalonSRX(port);
-//        configureTalon(talon, config);
-//        return new GemTalon<>(talon, isSlave);
-//    }
-
-//    public static GemTalon<TalonSRX> createDefaultTalonSRX(final int port) {
-//        return createTalonSRX(port, DEFAULT_TALON_CONFIG, false);
-//    }
-//
-//    public static GemTalon<TalonSRX> createSlaveTalonSRX(final int port) {
-//        return createTalonSRX(port, SLAVE_TALON_CONFIG, true);
-//    }
-
-    public static GemTalon<TalonFX> createTalonFX(final int port, final TalonConfiguration config, final boolean isSlave) {
-        final var talon = new TalonFX(port);
+    public static GemTalon<TalonFX> createTalonFX(final int port, final String bus, final TalonConfiguration config, final boolean isSlave) {
+        final var talon = new TalonFX(port, bus);
         configureTalon(talon, config);
         talon.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, TIMEOUT_MS);
-        return new GemTalon<>(talon, isSlave);
+        return new GemTalon<>(talon, bus, isSlave);
     }
 
-    public static GemTalon<TalonFX> createDefaultTalonFX(final int port) {
-        return createTalonFX(port, DEFAULT_TALON_CONFIG, false);
+    public static GemTalon<TalonFX> createDefaultTalonFX(final int port, final String bus) {
+        return createTalonFX(port, bus, DEFAULT_TALON_CONFIG, false);
     }
 
-    public static GemTalon<TalonFX> createSlaveTalonFX(final int port) {
-        return createTalonFX(port, SLAVE_TALON_CONFIG, true);
-    }
-
-    public static GemTalon<TalonFX> createDriveTalonFX(final int port) {
-        return createTalonFX(port, DRIVE_TALON, false);
-    }
-
-    public static GemTalon<TalonFX> createHighPerformanceTalonFX(final int port) {
-        return createTalonFX(port, HIGH_PERFORMANCE_TALON_CONFIG, false);
+    public static GemTalon<TalonFX> createSlaveTalonFX(final int port, final String bus) {
+        return createTalonFX(port, bus, SLAVE_TALON_CONFIG, true);
     }
 }
