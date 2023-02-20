@@ -17,6 +17,7 @@ public final class Constants {
     public static final double stickDeadband = 0.15;
 
     public static final double VISION_OUTLIER_DISTANCE = 1.0; // meters
+
     public static final class Features {
         public static final boolean DO_VISION_FILTER = true;
     }
@@ -88,8 +89,9 @@ public final class Constants {
         /* Swerve Profiling Values */
         /** Meters per Second */
         public static final double maxSpeed = 6.08; //: This must be tuned to specific robot
-        /** Radians per Second */
-        public static final double maxAngularVelocity = (maxSpeed / Math.hypot(trackWidth / 2.0, wheelBase / 2.0)) / 2.0; //: This must be tuned to specific robot
+
+        /** Analytically derived, Radians per Second */
+        public static final double maxAngularVelocity = (maxSpeed / Math.hypot(trackWidth / 2.0, wheelBase / 2.0)) / 2.0;
 
         /* Neutral Modes */
         public static final NeutralMode angleNeutralMode = NeutralMode.Coast;
