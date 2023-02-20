@@ -1,6 +1,6 @@
 package com.gemsrobotics.lib.data;
 
-import com.gemsrobotics.lib.timing.ElapsedTimer;
+import edu.wpi.first.wpilibj.Timer;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -11,8 +11,9 @@ public class CachedValue<T> {
 		return "CachedValue-" + m_type;
 	}
 
+	private final double m_timeout;
 	private final Class<T> m_type;
-	private final ElapsedTimer m_timer;
+	private final Timer m_timer;
 	private final Supplier<T> m_source;
 
 	private boolean m_initialized;
@@ -24,7 +25,8 @@ public class CachedValue<T> {
 			final Supplier<T> source
 	) {
 		m_type = type;
-		m_timer = new ElapsedTimer(timeout);
+		m_timeout = timeout;
+		m_timer = new Timer();
 		m_timer.reset();
 		m_source = source;
 
@@ -45,7 +47,7 @@ public class CachedValue<T> {
 				m_initialized = true;
 			}
 
-			if (m_timer.hasElapsed()) {
+			if (m_timer.hasElapsed(m_timeout)) {
 				set(m_source.get());
 				m_timer.reset();
 			}
@@ -58,14 +60,10 @@ public class CachedValue<T> {
 	}
 
 	public boolean hasExpired() {
-	    return m_timer.hasElapsed();
+	    return m_timer.hasElapsed(m_timeout);
     }
 
 	public synchronized Optional<T> getLastValue() {
 		return Optional.ofNullable(m_oldValue);
-	}
-
-	public <U> CachedValue<U> map(final Class<U> newType, final Function<T, U> f) {
-		return new CachedValue<>(newType, m_timer.getDuration(), () -> f.apply(m_source.get()));
 	}
 }
