@@ -37,10 +37,10 @@ public class RobotContainer {
     public RobotContainer() {
         m_swerve.setDefaultCommand(
             new TeleopSwerve(
-                    m_swerve,
+                m_swerve,
                 () -> -driver.getRawAxis(translationAxis), 
                 () -> -driver.getRawAxis(strafeAxis), 
-                () -> -driver.getRawAxis(rotationAxis), 
+                () -> -driver.getRawAxis(rotationAxis),
                 robotCentric::getAsBoolean
             )
         );

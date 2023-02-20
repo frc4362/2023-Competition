@@ -90,7 +90,7 @@ public class Swerve extends SubsystemBase {
         for (final var mod : m_swerveModules) {
             mod.setDesiredState(desiredStates[mod.moduleNumber], false);
         }
-    }    
+    }
 
     public Pose2d getPose() {
         return m_swervePoseEstimator.getEstimatedPosition();

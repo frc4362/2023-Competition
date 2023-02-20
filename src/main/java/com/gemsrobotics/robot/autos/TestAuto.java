@@ -20,8 +20,6 @@ import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 
 public class TestAuto extends SequentialCommandGroup {
-
-
     public TestAuto(Swerve s_Swerve){
         TrajectoryConfig config =
             new TrajectoryConfig(

@@ -1,8 +1,8 @@
 package com.gemsrobotics.lib.util;
 
-import static com.gemsrobotics.lib.utils.MathUtils.Tau;
-
 public class Units {
+	private static final double Tau = 2 * Math.PI;
+
     private Units() {}
 
     public static double degrees2Rads(final double degrees) {

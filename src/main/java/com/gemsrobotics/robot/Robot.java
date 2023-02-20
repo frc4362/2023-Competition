@@ -4,9 +4,17 @@
 
 package com.gemsrobotics.robot;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.gemsrobotics.lib.LimelightHelpers;
+import com.gemsrobotics.robot.subsystems.Pivot;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -19,10 +27,14 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  */
 public class Robot extends TimedRobot {
   public static CTREConfigs ctreConfigs;
-
+  private XboxController m_controller = new XboxController(0);
   private Command m_autonomousCommand;
+  private Pivot m_pivot;
 
-  private RobotContainer m_robotContainer;
+  private static final String PIVOT_KEY = "pivot_angle";
+  double pivotRef = Double.NaN;
+
+//  private RobotContainer m_robotContainer;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -31,9 +43,14 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     ctreConfigs = new CTREConfigs();
+    m_pivot = new Pivot();
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    m_robotContainer = new RobotContainer();
+//    m_robotContainer = new RobotContainer();
+
+//    CommandScheduler.getInstance().registerSubsystem(m_robotContainer.getSwerve());
+    CommandScheduler.getInstance().registerSubsystem(m_pivot);
+    SmartDashboard.putNumber(PIVOT_KEY, 90);
   }
 
   /**
@@ -54,7 +71,9 @@ public class Robot extends TimedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    m_pivot.disable();
+  }
 
   @Override
   public void disabledPeriodic() {}
@@ -62,7 +81,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+//    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
@@ -87,12 +106,17 @@ public class Robot extends TimedRobot {
     }
 
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
+    m_pivot.enable();
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    
+    double newP = SmartDashboard.getNumber(PIVOT_KEY, Double.NaN);
+
+    if (!Double.isNaN(newP)) {
+      m_pivot.setReference(Rotation2d.fromDegrees(newP));
+    }
   }
 
   @Override

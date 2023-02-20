@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 
 
 public class TeleopSwerve extends CommandBase {    
-    private Swerve s_Swerve;    
+    private Swerve m_swerve;
     private DoubleSupplier translationSup;
     private DoubleSupplier strafeSup;
     private DoubleSupplier rotationSup;
@@ -23,7 +23,7 @@ public class TeleopSwerve extends CommandBase {
     private SlewRateLimiter rotationFilter;
 
     public TeleopSwerve(Swerve s_Swerve, DoubleSupplier translationSup, DoubleSupplier strafeSup, DoubleSupplier rotationSup, BooleanSupplier robotCentricSup) {
-        this.s_Swerve = s_Swerve;
+        this.m_swerve = s_Swerve;
         addRequirements(s_Swerve);
 
         this.translationSup = translationSup;
@@ -47,7 +47,7 @@ public class TeleopSwerve extends CommandBase {
         rotationVal = rotationFilter.calculate(rotationVal);
         
         /* Drive */
-        s_Swerve.drive(
+        m_swerve.drive(
             new Translation2d(translationVal, strafeVal).times(Constants.Swerve.maxSpeed),
             rotationVal * Constants.Swerve.maxAngularVelocity, 
             !robotCentricSup.getAsBoolean(), 
