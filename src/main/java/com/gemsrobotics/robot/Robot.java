@@ -29,12 +29,12 @@ public class Robot extends TimedRobot {
   public static CTREConfigs ctreConfigs;
   private XboxController m_controller = new XboxController(0);
   private Command m_autonomousCommand;
-  private Pivot m_pivot;
+  //private Pivot m_pivot;
 
   private static final String PIVOT_KEY = "pivot_angle";
   double pivotRef = Double.NaN;
 
-//  private RobotContainer m_robotContainer;
+  private RobotContainer m_robotContainer;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -43,13 +43,13 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     ctreConfigs = new CTREConfigs();
-    m_pivot = new Pivot();
+    //m_pivot = new Pivot();
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    // autonomous chooser on the dashboard.
-//    m_robotContainer = new RobotContainer();
+   //  autonomous chooser on the dashboard.
+    m_robotContainer = new RobotContainer();
 
-//    CommandScheduler.getInstance().registerSubsystem(m_robotContainer.getSwerve());
-    CommandScheduler.getInstance().registerSubsystem(m_pivot);
+    CommandScheduler.getInstance().registerSubsystem(m_robotContainer.getSwerve());
+    //CommandScheduler.getInstance().registerSubsystem(m_pivot);
     SmartDashboard.putNumber(PIVOT_KEY, 90);
   }
 
@@ -72,7 +72,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    m_pivot.disable();
+    //m_pivot.disable();
   }
 
   @Override
@@ -106,17 +106,17 @@ public class Robot extends TimedRobot {
     }
 
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
-    m_pivot.enable();
+    //m_pivot.enable(); TODO PIVOT
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    double newP = SmartDashboard.getNumber(PIVOT_KEY, Double.NaN);
+    // double newP = SmartDashboard.getNumber(PIVOT_KEY, Double.NaN); TODO PIVOT
 
-    if (!Double.isNaN(newP)) {
-      m_pivot.setReference(Rotation2d.fromDegrees(newP));
-    }
+    // if (!Double.isNaN(newP)) {
+    //   m_pivot.setReference(Rotation2d.fromDegrees(newP));
+    // }
   }
 
   @Override
