@@ -8,6 +8,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.gemsrobotics.lib.LimelightHelpers;
+import com.gemsrobotics.robot.subsystems.Elevator;
 import com.gemsrobotics.robot.subsystems.Pivot;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -30,6 +31,7 @@ public class Robot extends TimedRobot {
   private XboxController m_controller = new XboxController(0);
   private Command m_autonomousCommand;
   //private Pivot m_pivot;
+  private Elevator m_elevator;
 
   private static final String PIVOT_KEY = "pivot_angle";
   double pivotRef = Double.NaN;
@@ -43,12 +45,14 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     ctreConfigs = new CTREConfigs();
+    m_elevator = new Elevator();
     //m_pivot = new Pivot();
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
    //  autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
 
     CommandScheduler.getInstance().registerSubsystem(m_robotContainer.getSwerve());
+    CommandScheduler.getInstance().registerSubsystem(m_elevator);
     //CommandScheduler.getInstance().registerSubsystem(m_pivot);
     SmartDashboard.putNumber(PIVOT_KEY, 90);
   }
@@ -73,6 +77,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     //m_pivot.disable();
+    m_elevator.disable();
   }
 
   @Override
@@ -107,6 +112,7 @@ public class Robot extends TimedRobot {
 
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
     //m_pivot.enable(); TODO PIVOT
+    //m_elevator.enable(); TODO ELEVATOR
   }
 
   /** This function is called periodically during operator control. */
