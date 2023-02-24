@@ -19,8 +19,8 @@ public class Elevator extends ProfiledPIDSubsystem {
 	private static final String MOTOR_BUS = "rio";
 	// limits calculated from stowed starting position
 	private static final double
-			FORWARD_SOFT_LIMIT = (0.69*2.0), //TODO
-			REVERSE_SOFT_LIMIT = 0; //TODO
+			FORWARD_SOFT_LIMIT = (0.69*2.0),
+			REVERSE_SOFT_LIMIT = 0;
 
 	private static final double
 			kP = 4.4, //TODO
@@ -54,10 +54,8 @@ public class Elevator extends ProfiledPIDSubsystem {
 		m_motor.setInvertedOutput(false);
 		m_motor.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE); //TODO may move to coast for measurements
 
-		m_motor.setGearingParameters(1.0/(3.0*3.0/2.0), Units.inches2Meters(4.0)/(2.0*Math.PI));
+		m_motor.setGearingParameters(1.0/(3.0*3.0), Units.inches2Meters(4.0*2)/(2.0*Math.PI));
 
-		//m_controller = new PIDController(252, 0.0, 4);
-		//m_controller.setTolerance(TOLERANCE_METERS);
 		//m_feedforward = new ElevatorFeedforward(0.103, 0.27, 0.161, 0.002);
 
 		//setReference(STARTING_LENGTH);
