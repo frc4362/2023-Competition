@@ -18,6 +18,11 @@ public final class Constants {
 
     public static final double VISION_OUTLIER_DISTANCE = 1.0; // meters
 
+    public static final class CANBusses {
+        public static final String AUX = "aux";
+        public static final String MAIN = "rio";
+    }
+
     public static final class Features {
         public static final boolean DO_VISION_FILTER = true;
     }
