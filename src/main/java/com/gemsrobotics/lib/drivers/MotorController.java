@@ -37,10 +37,12 @@ public interface MotorController<T> {
      * @return Volts fed into the motor controller
      */
     double getVoltageInput();
+
     /**
      * @return Volts applied to the motor
      */
     double getVoltageOutput();
+
     /**
      * @return Amps of the output
      */

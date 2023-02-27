@@ -1,5 +1,6 @@
 package com.gemsrobotics.robot.subsystems;
 
+import com.ctre.phoenix.sensors.PigeonIMU_StatusFrame;
 import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.SwerveModule;
 import com.gemsrobotics.robot.Constants;
@@ -19,8 +20,19 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.List;
+import java.util.Objects;
 
-public class Swerve extends SubsystemBase {
+public final class Swerve extends SubsystemBase {
+    private static Swerve INSTANCE;
+
+    public static Swerve getInstance() {
+        if (Objects.isNull(INSTANCE)) {
+            INSTANCE = new Swerve();
+        }
+
+        return INSTANCE;
+    }
+
     public SwerveDrivePoseEstimator m_swervePoseEstimator;
     public List<SwerveModule> m_swerveModules;
     public Pigeon2 m_imu;
@@ -29,6 +41,7 @@ public class Swerve extends SubsystemBase {
     public Swerve() {
         m_imu = new Pigeon2(Constants.Swerve.pigeonID);
         m_imu.configFactoryDefault();
+        m_imu.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_6_SensorFusion, 5);
 
         m_swerveModules = List.of(
             new SwerveModule(0, Constants.Swerve.Mod0.constants),
@@ -116,7 +129,7 @@ public class Swerve extends SubsystemBase {
         return positions;
     }
 
-    public void zeroGyro(){
+    public void zeroGyro() {
         m_imu.setYaw(0);
     }
 
@@ -153,10 +166,11 @@ public class Swerve extends SubsystemBase {
         m_fieldDisplay.setRobotPose(new Pose2d(fixedPose, estimated.getRotation().rotateBy(Rotation2d.fromDegrees(180))));
 
         SmartDashboard.putNumber("Yaw", m_imu.getYaw());
-        for (final var mod : m_swerveModules) {
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);    
-        }
+        SmartDashboard.putString("Pose", m_swervePoseEstimator.getEstimatedPosition().toString());
+//        for (final var mod : m_swerveModules) {
+//            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
+//            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
+//            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+//        }
     }
 }

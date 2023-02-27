@@ -262,7 +262,8 @@ public class GemTalon<TalonType extends BaseTalon> implements MotorController<Ta
 
 	@Override
 	public void setVoltage(final double voltage, final double feedforward) {
-		setDutyCycle(voltage / RobotController.getBatteryVoltage(), feedforward);
+		final var currentVoltage = RobotController.getBatteryVoltage();
+		setDutyCycle(voltage / currentVoltage, feedforward / currentVoltage);
 	}
 
 	@Override
