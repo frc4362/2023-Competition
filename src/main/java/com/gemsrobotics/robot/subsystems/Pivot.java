@@ -6,16 +6,16 @@ import com.gemsrobotics.lib.drivers.MotorControllerFactory;
 import com.gemsrobotics.robot.Constants;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.ProfiledPIDSubsystem;
 
 import java.util.Objects;
 import static java.lang.Math.abs;
 
-public class Pivot implements Subsystem {
-	private static final boolean DO_LOGGING = false;
-
+public class Pivot extends ProfiledPIDSubsystem {
 	private static Pivot INSTANCE = null;
 
 	public static Pivot getInstance() {
@@ -30,19 +30,16 @@ public class Pivot implements Subsystem {
 	private static final String MOTOR_BUS = Constants.CANBusses.AUX;
 	public static final double GEARING_MULTIPLIER = 1.0 / 531.67;
 
-	// at 0 position units, arm 54 degrees off of the horizontal
-	private static final Rotation2d STARTING_ANGLE = Rotation2d.fromDegrees(90); // 54 degrees is the starting angle
-
 	// limits calculated from stowed starting position (54 degrees)
 	private static final int
 			FORWARD_SOFT_LIMIT = 60_000,
 			REVERSE_SOFT_LIMIT = -365_000;
 
 	private static final double
-			kP = 252,
-			kD = 4;
-	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(0.5);
+			kP = 126,
+			kD = 2;
 
+	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(0.5);
 
 	private final MotorController<TalonFX> m_motor;
 	private final PIDController m_controllerPivot;
@@ -51,6 +48,18 @@ public class Pivot implements Subsystem {
 	private Rotation2d m_reference;
 
 	private Pivot() {
+		super(
+				new ProfiledPIDController(
+						kP,
+						0.0,
+						kD,
+						new TrapezoidProfile.Constraints(
+								1.2,
+								1.2
+						)
+				)
+		);
+
 		m_motor = MotorControllerFactory.createDefaultTalonFX(MOTOR_ID, MOTOR_BUS);
 		m_motor.setInvertedOutput(false);
 		m_motor.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
@@ -63,17 +72,34 @@ public class Pivot implements Subsystem {
 
 		m_controllerPivot = new PIDController(kP, 0.0, kD);
 		m_controllerPivot.setTolerance(TOLERANCE.getRadians());
-		m_feedforward = new ArmFeedforward(0.103, 0.27, 0.0, 0.0);
+		m_feedforward = new ArmFeedforward(0.103, 0.27, 9.2, 0.136);
 
-		setReference(STARTING_ANGLE);
+		setReference(Position.STARTING.rotation);
+	}
+
+	public enum Position {
+		STARTING(Rotation2d.fromDegrees(54)),
+		STOWED(Rotation2d.fromDegrees(56)),
+		RETURNED(Rotation2d.fromDegrees(62)),
+		SCORING(Rotation2d.fromDegrees(35));
+
+		public final Rotation2d rotation;
+
+		Position(final Rotation2d rot) {
+			rotation = rot;
+		}
 	}
 
 	public void setReference(final Rotation2d reference) {
 		m_reference = reference;
 	}
 
-	public Rotation2d getPosition() {
-		return Rotation2d.fromRotations(m_motor.getPositionRotations()).rotateBy(STARTING_ANGLE);
+	public void setReference(final Position setpoint) {
+		setReference(setpoint.rotation);
+	}
+
+	public Rotation2d getAngle() {
+		return Rotation2d.fromRotations(m_motor.getPositionRotations()).rotateBy(Position.STARTING.rotation);
 	}
 
 	public boolean atReference(final Rotation2d tolerance) {
@@ -84,16 +110,27 @@ public class Pivot implements Subsystem {
 		return atReference(TOLERANCE);
 	}
 
+	public void log() {
+		SmartDashboard.putNumber("Pivot Angle", getAngle().getDegrees());
+		SmartDashboard.putNumber("Pivot Drawn Amps", m_motor.getDrawnCurrentAmps());
+		SmartDashboard.putNumber("Pivot Control Effort", m_motor.getVoltageOutput());
+		SmartDashboard.putNumber("Pivot Velocity", m_motor.getVelocityAngularRadiansPerSecond());
+	}
+
 	@Override
 	public void periodic() {
-		final var ff = m_feedforward.calculate(getPosition().getRadians(), 0.0);
-		m_motor.setVoltage(m_controllerPivot.calculate(getPosition().getRadians(), m_reference.getRadians()), ff);
+//		super.periodic();
+		final var ff = m_feedforward.calculate(getAngle().getRadians(), 0.0);
+		m_motor.setVoltage(m_controllerPivot.calculate(getAngle().getRadians(), m_reference.getRadians()), ff);
+	}
 
-		if (DO_LOGGING) {
-			SmartDashboard.putNumber("Pivot Angle", getPosition().getDegrees());
-			SmartDashboard.putNumber("Pivot Drawn Amps", m_motor.getDrawnCurrentAmps());
-			SmartDashboard.putNumber("Pivot Control Effort", m_motor.getVoltageOutput());
-			SmartDashboard.putNumber("Pivot Velocity", m_motor.getVelocityAngularRadiansPerSecond());
-		}
+	@Override
+	protected void useOutput(double output, TrapezoidProfile.State setpoint) {
+		m_motor.setVoltage(output, m_feedforward.calculate(setpoint.position, setpoint.velocity));
+	}
+
+	@Override
+	protected double getMeasurement() {
+		return getAngle().getRadians();
 	}
 }

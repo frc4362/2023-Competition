@@ -4,15 +4,14 @@
 
 package com.gemsrobotics.robot;
 
-import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.gemsrobotics.lib.LimelightHelpers;
-import com.gemsrobotics.robot.subsystems.Pivot;
-import edu.wpi.first.math.geometry.Rotation2d;
+import com.gemsrobotics.robot.commands.TeleopSwerve;
+import com.gemsrobotics.robot.subsystems.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -26,8 +25,12 @@ public class Robot extends TimedRobot {
   private CommandBase m_autonomousCommand;
   private XboxController m_joystick = new XboxController(0);
   private static final String PIVOT_KEY = "pivot_angle";
+  private static final String ELEVATOR_KEY = "elevator_height";
+  private static final String INTAKE_KEY = "intake_pos";
+  private static final String WRIST_KEY = "wrist_angle_pos";
   double pivotRef = Double.NaN;
-  private TalonFX m_elevator;
+
+  private Command m_teleopSwerveCommand;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -35,11 +38,28 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    m_elevator = new TalonFX(18);
-    m_elevator.setNeutralMode(NeutralMode.Coast);
+    CommandScheduler.getInstance().registerSubsystem(
+            Intake.getInstance(),
+            Wrist.getInstance(),
+            Pivot.getInstance(),
+            Elevator.getInstance(),
+            ArmManager.getInstance(),
+            Swerve.getInstance(),
+            Superstructure.getInstance()
+    );
 
-    CommandScheduler.getInstance().registerSubsystem(Pivot.getInstance());
-    SmartDashboard.putNumber(PIVOT_KEY, 90);
+    m_teleopSwerveCommand = new TeleopSwerve(
+            Swerve.getInstance(),
+            () -> -m_joystick.getLeftY(),
+            () -> -m_joystick.getLeftX(),
+            () -> -m_joystick.getRightX(),
+            () -> false
+    );
+
+    SmartDashboard.putNumber(PIVOT_KEY, Pivot.Position.STARTING.rotation.getDegrees());
+    SmartDashboard.putNumber(ELEVATOR_KEY, 0.0);
+    SmartDashboard.putNumber(INTAKE_KEY, 0.0);
+    SmartDashboard.putNumber(WRIST_KEY, Wrist.STARTING_ANGLE_FROM_ELEVATOR.getDegrees());
   }
 
   /**
@@ -56,12 +76,14 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    SmartDashboard.putNumber("Elevator Position", m_elevator.getSelectedSensorPosition());
+    Elevator.getInstance().log();
+    Wrist.getInstance().log();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
+    CommandScheduler.getInstance().cancel(m_teleopSwerveCommand);
   }
 
   @Override
@@ -92,20 +114,35 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
+//    CommandScheduler.getInstance().schedule(m_teleopSwerveCommand);
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
-    //m_elevator.enable(); TODO ELEVATOR
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-     double newP = SmartDashboard.getNumber(PIVOT_KEY, Double.NaN); // TODO PIVOT
+    if (m_joystick.getAButton()) {
+      Superstructure.getInstance().setWantScore(Superstructure.ScoringGoal.MID);
+    } else {
+      Superstructure.getInstance().setWantedState(Superstructure.WantedState.STOWED);
+    }
 
-     if (!Double.isNaN(newP)) {
-       Pivot.getInstance().setReference(Rotation2d.fromDegrees(newP));
-     }
+//    double newP = SmartDashboard.getNumber(PIVOT_KEY, Double.NaN); // TODO PIVOT
+//
+//    if (!Double.isNaN(newP)) {
+//      Pivot.getInstance().setReference(Rotation2d.fromDegrees(newP));
+//    }
 
-//     m_elevator.set(TalonFXControlMode.PercentOutput, -m_controller.getLeftY());
+//     Pivot.getInstance().setReference(Rotation2d.fromDegrees(54));
+//     Elevator.getInstance().setReference(m_joystick.getAButton() ? Elevator.Setpoints.TEST_POSITION : Elevator.Setpoints.SAFETY_BOTTOM);
+
+//    Elevator.getInstance().setReference(MathUtils.coerce(0.02, SmartDashboard.getNumber(ELEVATOR_KEY, 0.02), 1.38));
+////    Elevator.getInstance().setOpenLoop(SmartDashboard.getNumber(ELEVATOR_KEY, 0.0));
+//    Intake.getInstance().setReference(SmartDashboard.getNumber(INTAKE_KEY, 0.0));
+//    Wrist.getInstance().setReferenceAngleToElevator(Units.degreesToRotations(MathUtils.coerce(
+//            -54,
+//            SmartDashboard.getNumber(WRIST_KEY, Wrist.STARTING_ANGLE_FROM_ELEVATOR.getDegrees()),
+//            160)));
   }
 
   @Override

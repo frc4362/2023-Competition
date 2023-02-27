@@ -2,9 +2,9 @@ package com.gemsrobotics.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 
-public class SuperstructureState {
+public final class SuperstructureState {
     // TODO
-    public static final SuperstructureState STARTING = new SuperstructureState(Rotation2d.fromDegrees(54), Rotation2d.fromDegrees(90), 0.0);
+    public static final SuperstructureState STARTING = new SuperstructureState(Rotation2d.fromDegrees(54), -54.0, 0.025);
     public static final SuperstructureState
             // internal pickup states
             STOWED_FOR_SPINDEXER = null,
@@ -25,10 +25,11 @@ public class SuperstructureState {
             // general states
             STOWED = null;
 
-    public final Rotation2d rotationPivot, rotationWrist;
+    public final Rotation2d rotationPivot;
+    public final double rotationWrist;
     public final double elevatatorExtension;
 
-    public SuperstructureState(final Rotation2d pivot, final Rotation2d wrist, final double extension) {
+    public SuperstructureState(final Rotation2d pivot, final double wrist, final double extension) {
         rotationPivot = pivot;
         rotationWrist = wrist;
         elevatatorExtension = extension;
