@@ -32,12 +32,15 @@ public class Robot extends TimedRobot {
 
   private Command m_teleopSwerveCommand;
 
+  private Claw m_claw;
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   @Override
   public void robotInit() {
+    m_claw = new Claw();
     CommandScheduler.getInstance().registerSubsystem(
             Intake.getInstance(),
             Wrist.getInstance(),
@@ -45,6 +48,7 @@ public class Robot extends TimedRobot {
             Elevator.getInstance(),
             ArmManager.getInstance(),
             Swerve.getInstance(),
+            Claw.getInstance(),
             Superstructure.getInstance()
     );
 
@@ -76,8 +80,10 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    Elevator.getInstance().log();
-    Wrist.getInstance().log();
+    //Elevator.getInstance().log();
+    //Wrist.getInstance().log();
+    Claw.getInstance().log();
+    SmartDashboard.putBoolean("Grip LeftBumper", m_joystick.getLeftBumper());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -122,10 +128,22 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     if (m_joystick.getAButton()) {
-      Superstructure.getInstance().setWantScore(Superstructure.ScoringGoal.MID);
+      //Superstructure.getInstance().openClaw();
+      //Superstructure.getInstance().setWantScore(Superstructure.ScoringGoal.MID);
     } else {
+      //Superstructure.getInstance().closeClaw();
       Superstructure.getInstance().setWantedState(Superstructure.WantedState.STOWED);
     }
+    if(m_joystick.getLeftBumper()) {
+      m_claw.setReference(Claw.State.GRIPPING);
+    } else {
+      m_claw.setReference(Claw.State.NEUTRAL);
+    }
+    // if(m_joystick.getRightBumper()) {
+    //   m_claw.setReference(Claw.State.OPEN);
+    // }
+    m_claw.setSpinPower(m_joystick.getRightTriggerAxis());
+    m_claw.setSpin(m_joystick.getXButton());
 
 //    double newP = SmartDashboard.getNumber(PIVOT_KEY, Double.NaN); // TODO PIVOT
 //

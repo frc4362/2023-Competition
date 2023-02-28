@@ -36,7 +36,7 @@ public class Pivot extends ProfiledPIDSubsystem {
 			REVERSE_SOFT_LIMIT = -365_000;
 
 	private static final double
-			kP = 126,
+			kP = 126/2,//126,
 			kD = 2;
 
 	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(0.5);

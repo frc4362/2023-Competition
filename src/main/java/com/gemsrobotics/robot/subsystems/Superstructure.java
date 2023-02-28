@@ -60,6 +60,7 @@ public final class Superstructure implements Subsystem {
 	private final Pivot m_pivot;
 	private final Swerve m_swerve;
 	private final Wrist m_wrist;
+	private final Claw m_claw;
 
 	private Superstructure() {
 		m_intake = Intake.getInstance();
@@ -67,6 +68,7 @@ public final class Superstructure implements Subsystem {
 		m_swerve = Swerve.getInstance();
 		m_wrist = Wrist.getInstance();
 		m_pivot = Pivot.getInstance();
+		m_claw = Claw.getInstance();
 
 		m_stateChangedTimer = new Timer();
 		m_wantStateChangeTimer = new Timer();
@@ -76,6 +78,15 @@ public final class Superstructure implements Subsystem {
 
 		m_scoringGoal = Optional.empty();
 	}
+
+	// public void openClaw() {
+	// 	m_claw.setReference(Claw.Position.OPEN);
+	// }
+
+	
+	// public void closeClaw() {
+	// 	m_claw.setReference(Claw.Position.CLOSED);
+	// }
 
 	public void setWantedState(final WantedState newState) {
 		if (newState != m_stateWanted) {
@@ -155,6 +166,8 @@ public final class Superstructure implements Subsystem {
 		m_intake.setReference(Intake.Position.RETRACTED);
 		m_wrist.setReferencePosition(Wrist.Position.STOWED);
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
+		//CLAW!!
+		//m_claw.setReference(Claw.Position.CLOSED);
 
 		if (m_intake.atReference()) {
 			m_pivot.setReference(Pivot.Position.STOWED);
@@ -203,6 +216,8 @@ public final class Superstructure implements Subsystem {
 
 	public SystemState handleReadyToScore() {
 		m_intake.setReference(Intake.Position.MIDDLE);
+		//CLAW!!
+		//m_claw.setReference(Claw.Position.OPEN);
 		if (m_stateWanted == WantedState.SCORE) {
 			return SystemState.READY_TO_SCORE;
 		} else {
@@ -214,6 +229,8 @@ public final class Superstructure implements Subsystem {
 		m_elevator.setReference(Elevator.Position.FRONT_SAFETY);
 		m_pivot.setReference(Pivot.Position.SCORING);
 		m_intake.setReference(Intake.Position.MIDDLE);
+		//CLAW!!
+		//m_claw.setReference(Claw.Position.CLOSED);
 
 		if (m_elevator.atReference()) {
 			return SystemState.RETURN_TO_CLEAR_PIVOT;
