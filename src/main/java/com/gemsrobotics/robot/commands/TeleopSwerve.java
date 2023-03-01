@@ -1,5 +1,6 @@
 package com.gemsrobotics.robot.commands;
 
+import com.gemsrobotics.lib.util.Rotation2dPlus;
 import com.gemsrobotics.robot.Constants;
 import com.gemsrobotics.robot.subsystems.Swerve;
 
@@ -9,6 +10,7 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 
@@ -51,10 +53,17 @@ public class TeleopSwerve extends CommandBase {
         translationVal = m_translationFilter.calculate(translationVal);
         strafeVal = m_strafeFilter.calculate(strafeVal);
         rotationVal = m_rotationFilter.calculate(rotationVal);
-        
+
+        var translation = new Translation2d(translationVal, strafeVal);
+        var nearestPole = new Rotation2dPlus(translation.getAngle()).getNearestPole();
+
+        if (Math.abs(translation.getAngle().minus(nearestPole).getDegrees()) < 5.0) {
+            translation = new Translation2d(translation.getNorm(), nearestPole);
+        }
+
         /* Drive */
-        m_swerve.drive(
-            new Translation2d(translationVal, strafeVal).times(Constants.Swerve.maxSpeed),
+        m_swerve.setDrive(
+            translation.times(Constants.Swerve.maxSpeed),
             rotationVal * Constants.Swerve.maxAngularVelocity, 
             !m_isRobotCentric.getAsBoolean(),
             true

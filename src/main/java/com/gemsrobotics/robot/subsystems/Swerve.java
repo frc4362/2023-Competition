@@ -5,24 +5,32 @@ import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.SwerveModule;
 import com.gemsrobotics.robot.Constants;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.*;
 
 import com.ctre.phoenix.sensors.Pigeon2;
 
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 
 import java.util.List;
 import java.util.Objects;
 
+import static java.lang.Math.abs;
+
 public final class Swerve extends SubsystemBase {
+    public static final int MOVING_AVERAGE_SIZE = 7;
     private static Swerve INSTANCE;
 
     public static Swerve getInstance() {
@@ -33,10 +41,13 @@ public final class Swerve extends SubsystemBase {
         return INSTANCE;
     }
 
-    public SwerveDrivePoseEstimator m_swervePoseEstimator;
-    public List<SwerveModule> m_swerveModules;
-    public Pigeon2 m_imu;
-    public Field2d m_fieldDisplay;
+    private final SwerveDrivePoseEstimator m_swervePoseEstimator;
+    private final List<SwerveModule> m_swerveModules;
+    private final Pigeon2 m_imu;
+    private final Field2d m_fieldDisplay;
+    private final LinearFilter m_deltaPitchFilter;
+    private double m_deltaPitchAverage;
+    private double m_lastPitch;
 
     public Swerve() {
         m_imu = new Pigeon2(Constants.Swerve.pigeonID);
@@ -57,6 +68,10 @@ public final class Swerve extends SubsystemBase {
         resetModulesToAbsolute();
         zeroGyro();
 
+        m_deltaPitchFilter = LinearFilter.movingAverage(MOVING_AVERAGE_SIZE);
+        m_lastPitch = m_imu.getPitch();
+        m_deltaPitchAverage = 0.0;
+
         m_fieldDisplay = new Field2d();
         SmartDashboard.putData(m_fieldDisplay);
 
@@ -65,12 +80,27 @@ public final class Swerve extends SubsystemBase {
                 Constants.Swerve.swerveKinematics,
                 getYaw(),
                 getModulePositions(),
-                new Pose2d(new Translation2d(3, 7), Rotation2d.fromDegrees(0)),
+//                new Pose2d(new Translation2d(3, 7), Rotation2d.fromDegrees(0)),
+                new Pose2d(new Translation2d(0, 0), Rotation2d.fromDegrees(0)),
                 VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
                 VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10)));
     }
 
-    public void drive(
+    public void setDrivePercent(
+            final Translation2d translation,
+            final double rotation,
+            final boolean fieldRelative,
+            final boolean isOpenLoop
+    ) {
+        setDrive(
+                translation.times(Constants.Swerve.maxSpeed),
+                rotation,
+                fieldRelative,
+                isOpenLoop
+        );
+    }
+
+    public void setDrive(
             final Translation2d translation,
             final double rotation,
             final boolean fieldRelative,
@@ -94,7 +124,11 @@ public final class Swerve extends SubsystemBase {
         for (final var mod : m_swerveModules){
             mod.setDesiredState(swerveModuleStates[mod.moduleNumber], isOpenLoop);
         }
-    }    
+    }
+
+    public void setNeutral() {
+        setDrive(new Translation2d(), 0, false, true);
+    }
 
     /* Used by SwerveControllerCommand in Auto */
     public void setModuleStates(final SwerveModuleState[] desiredStates) {
@@ -137,14 +171,62 @@ public final class Swerve extends SubsystemBase {
         return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - m_imu.getYaw()) : Rotation2d.fromDegrees(m_imu.getYaw());
     }
 
+    public Rotation2d getPitch() {
+        return Rotation2d.fromDegrees(m_imu.getPitch());
+    }
+
+    public Rotation2d getDeltaPitchAverage() {
+        return Rotation2d.fromDegrees(m_deltaPitchAverage);
+    }
+
+    public Command waitForPitchAround(final Rotation2d targetPitch, final double tolerance) {
+        return new WaitUntilCommand(() -> abs(getDeltaPitchAverage().minus(targetPitch).getDegrees()) < tolerance);
+    }
+
+    public Command waitForPitchAround(final Rotation2d targetPitch) {
+        return waitForPitchAround(targetPitch, 1.5);
+    }
+
     public void resetModulesToAbsolute(){
         for (final var mod : m_swerveModules) {
             mod.resetToAbsolute();
         }
     }
 
+    public Command getAbsoluteTrackingCommand(final Trajectory trajectory) {
+        return new SwerveControllerCommand(
+                trajectory,
+                this::getPose,
+                Constants.Swerve.swerveKinematics,
+                new PIDController(Constants.AutoConstants.kPXController, 0, 0),
+                new PIDController(Constants.AutoConstants.kPYController, 0, 0),
+                Constants.Generation.thetaController,
+                this::setModuleStates,
+                this);
+    }
+
+    public Command getRelativeTrackingCommand(final Trajectory trajectory) {
+        return runOnce(() -> trajectory.relativeTo(getPose()))
+                       .andThen(getAbsoluteTrackingCommand(trajectory));
+    }
+
+    public Command getStopCommand() {
+        return runOnce(this::setNeutral);
+    }
+
+    public Command getResetOdometryCommand(final Trajectory trajectory) {
+        return runOnce(() -> resetOdometry(trajectory.getInitialPose()));
+    }
+
     @Override
     public void periodic() {
+        // pitch filtering
+        final var currentPitch = getPitch().getDegrees();
+        final var deltaPitch = currentPitch - m_lastPitch;
+        m_deltaPitchAverage = m_deltaPitchFilter.calculate(deltaPitch);
+        m_lastPitch = getPitch().getDegrees();
+
+        // pose estimation
         m_swervePoseEstimator.updateWithTime(Timer.getFPGATimestamp(), getYaw(), getModulePositions());
 
         if (Constants.Features.DO_VISION_FILTER) {
@@ -166,11 +248,13 @@ public final class Swerve extends SubsystemBase {
         m_fieldDisplay.setRobotPose(new Pose2d(fixedPose, estimated.getRotation().rotateBy(Rotation2d.fromDegrees(180))));
 
         SmartDashboard.putNumber("Yaw", m_imu.getYaw());
+        SmartDashboard.putNumber("Pitch", m_imu.getPitch());
+        SmartDashboard.putNumber("Roll", m_imu.getRoll());
         SmartDashboard.putString("Pose", m_swervePoseEstimator.getEstimatedPosition().toString());
-//        for (final var mod : m_swerveModules) {
+        for (final var mod : m_swerveModules) {
 //            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
 //            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
-//            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
-//        }
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+        }
     }
 }

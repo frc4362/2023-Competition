@@ -19,22 +19,10 @@ public final class ArmManager implements Subsystem {
 	private final Elevator m_elevator;
 	private final Wrist m_wrist;
 
-	private SuperstructureState m_reference;
-
 	private ArmManager() {
 		m_pivot = Pivot.getInstance();
 		m_elevator = Elevator.getInstance();
 		m_wrist = Wrist.getInstance();
-
-		m_reference = SuperstructureState.STARTING;
-	}
-
-	public void setReference(final SuperstructureState reference) {
-		m_reference = reference;
-	}
-
-	public boolean atReference() {
-		return m_pivot.atReference() && m_elevator.atReference() && m_wrist.atReference();
 	}
 
 	@Override

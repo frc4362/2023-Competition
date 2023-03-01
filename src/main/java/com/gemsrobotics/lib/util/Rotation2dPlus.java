@@ -11,6 +11,10 @@ public final class Rotation2dPlus extends Rotation2d {
 		super(radians);
 	}
 
+	public Rotation2dPlus(final Rotation2d rotation) {
+		super(rotation.getRadians());
+	}
+
 	public Rotation2dPlus(final double x, final double y) {
 		super(x, y);
 	}
@@ -30,7 +34,7 @@ public final class Rotation2dPlus extends Rotation2d {
 	/**
 	 * @return The pole nearest to this rotation.
 	 */
-	public Rotation2dPlus nearestPole() {
+	public Rotation2dPlus getNearestPole() {
 		final double poleSin;
 		final double poleCos;
 

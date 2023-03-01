@@ -5,15 +5,16 @@
 package com.gemsrobotics.robot;
 
 import com.gemsrobotics.lib.LimelightHelpers;
+import com.gemsrobotics.robot.commands.AutoBalanceCommand;
 import com.gemsrobotics.robot.commands.TeleopSwerve;
 import com.gemsrobotics.robot.subsystems.*;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -23,7 +24,15 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  */
 public class Robot extends TimedRobot {
   private CommandBase m_autonomousCommand;
-  private XboxController m_joystick = new XboxController(0);
+  private final XboxController m_joystick = new XboxController(0);
+  private final JoystickButton m_pickupButton = new JoystickButton(m_joystick, XboxController.Button.kA.value);
+  private final JoystickButton m_placementMidButton = new JoystickButton(m_joystick, XboxController.Button.kB.value);
+  private final JoystickButton m_placementHighButton = new JoystickButton(m_joystick, XboxController.Button.kY.value);
+  private final JoystickButton m_resetButton = new JoystickButton(m_joystick, XboxController.Button.kX.value);
+
+  private boolean m_selfPickup = false;
+
+  private boolean m_dropPiece = false;
   private static final String PIVOT_KEY = "pivot_angle";
   private static final String ELEVATOR_KEY = "elevator_height";
   private static final String INTAKE_KEY = "intake_pos";
@@ -32,33 +41,47 @@ public class Robot extends TimedRobot {
 
   private Command m_teleopSwerveCommand;
 
-  private Claw m_claw;
-
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   @Override
   public void robotInit() {
-    m_claw = new Claw();
     CommandScheduler.getInstance().registerSubsystem(
+            Claw.getInstance(),
             Intake.getInstance(),
             Wrist.getInstance(),
             Pivot.getInstance(),
             Elevator.getInstance(),
             ArmManager.getInstance(),
             Swerve.getInstance(),
-            Claw.getInstance(),
             Superstructure.getInstance()
     );
+
+    m_pickupButton.debounce(1.0, Debouncer.DebounceType.kRising);
+    m_pickupButton.onTrue(new InstantCommand(
+            () -> Superstructure.getInstance().setGoalPose(SuperstructurePose.SHELF_PICKUP)));
+
+    m_placementMidButton.debounce(1.0, Debouncer.DebounceType.kRising);
+    m_placementMidButton.onTrue(new InstantCommand(
+            () -> Superstructure.getInstance().setGoalPose(SuperstructurePose.MID_PLACE)));
+
+    m_placementHighButton.debounce(1.0, Debouncer.DebounceType.kRising);
+    m_placementHighButton.onTrue(new InstantCommand(
+            () -> Superstructure.getInstance().setGoalPose(SuperstructurePose.HIGH_PLACE)));
+
+    m_resetButton.debounce(1.0, Debouncer.DebounceType.kRising);
+    m_resetButton.onTrue(new InstantCommand(Superstructure.getInstance()::setGoalPoseCleared));
 
     m_teleopSwerveCommand = new TeleopSwerve(
             Swerve.getInstance(),
             () -> -m_joystick.getLeftY(),
             () -> -m_joystick.getLeftX(),
             () -> -m_joystick.getRightX(),
-            () -> false
+            m_joystick::getLeftBumper
     );
+
+    m_autonomousCommand = new AutoBalanceCommand(Swerve.getInstance());
 
     SmartDashboard.putNumber(PIVOT_KEY, Pivot.Position.STARTING.rotation.getDegrees());
     SmartDashboard.putNumber(ELEVATOR_KEY, 0.0);
@@ -80,10 +103,9 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    //Elevator.getInstance().log();
+//    Elevator.getInstance().log();
     //Wrist.getInstance().log();
-    Claw.getInstance().log();
-    SmartDashboard.putBoolean("Grip LeftBumper", m_joystick.getLeftBumper());
+//    Claw.getInstance().log();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -93,7 +115,8 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+  }
 
   /** This autonomous runs the autonomous command selected by your class. */
   @Override
@@ -108,7 +131,8 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+  }
 
   @Override
   public void teleopInit() {
@@ -120,30 +144,42 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
-//    CommandScheduler.getInstance().schedule(m_teleopSwerveCommand);
+    CommandScheduler.getInstance().schedule(m_teleopSwerveCommand);
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    if (m_joystick.getAButton()) {
-      //Superstructure.getInstance().openClaw();
-      //Superstructure.getInstance().setWantScore(Superstructure.ScoringGoal.MID);
-    } else {
-      //Superstructure.getInstance().closeClaw();
-      Superstructure.getInstance().setWantedState(Superstructure.WantedState.STOWED);
+    if (m_joystick.getStartButtonPressed()) {
+      Swerve.getInstance().zeroGyro();
     }
-    if(m_joystick.getLeftBumper()) {
-      m_claw.setReference(Claw.State.GRIPPING);
-    } else {
-      m_claw.setReference(Claw.State.NEUTRAL);
+
+//    if (m_joystick.getAButtonPressed()) {
+//      m_selfPickup = !m_selfPickup;
+//    }
+//
+//    if (m_selfPickup) {
+//      Superstructure.getInstance().setTargetPose(SuperstructurePose.SHELF_PICKUP);
+//    } else {
+//      Superstructure.getInstance().setWantedState(Superstructure.WantedState.STOWED);
+//    }
+
+//    if (m_joystick.getAButton()) {
+//      Superstructure.getInstance().setTargetPose(SuperstructureState.SHELF_PICKUP);
+//    } else {
+//      Superstructure.getInstance().setWantedState(Superstructure.WantedState.STOWED);
+//    }
+
+    if (m_joystick.getRightBumperPressed()) {
+      if (m_dropPiece) {
+        Claw.getInstance().requestDropPiece().schedule();
+      } else {
+        Claw.getInstance().requestGrab().schedule();
+      }
+
+      m_dropPiece = !m_dropPiece;
     }
-    // if(m_joystick.getRightBumper()) {
-    //   m_claw.setReference(Claw.State.OPEN);
-    // }
-    m_claw.setSpinPower(m_joystick.getRightTriggerAxis());
-    m_claw.setSpin(m_joystick.getXButton());
 
 //    double newP = SmartDashboard.getNumber(PIVOT_KEY, Double.NaN); // TODO PIVOT
 //

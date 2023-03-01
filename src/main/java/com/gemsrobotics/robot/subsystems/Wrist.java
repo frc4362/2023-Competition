@@ -62,10 +62,15 @@ public final class Wrist implements Subsystem {
 		m_referenceRotations = STARTING_ANGLE_FROM_ELEVATOR.getRotations();
 	}
 
+	// This is in angle relative to the elevator
+	// Negative numbers are forwards from the elevator
 	public enum Position {
 		STARTING(Rotation2d.fromDegrees(-54)),
+		SCORING_MID(Rotation2d.fromDegrees(-35)),
+		SCORING_HIGH(Rotation2d.fromDegrees(-35)),
+		SHELF_PICKUP(Rotation2d.fromDegrees(-39)),
 		CLEAR(Rotation2d.fromDegrees(-35)),
-		STOWED(Rotation2d.fromDegrees(-35));
+		STOWED(Rotation2d.fromDegrees(-15));
 
 		public final Rotation2d rotation;
 

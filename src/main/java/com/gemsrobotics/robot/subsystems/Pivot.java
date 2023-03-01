@@ -77,11 +77,13 @@ public class Pivot extends ProfiledPIDSubsystem {
 		setReference(Position.STARTING.rotation);
 	}
 
+	// Angles are positive coming up out of the ground
 	public enum Position {
 		STARTING(Rotation2d.fromDegrees(54)),
-		STOWED(Rotation2d.fromDegrees(56)),
+		STOWED(Rotation2d.fromDegrees(54)),
 		RETURNED(Rotation2d.fromDegrees(62)),
-		SCORING(Rotation2d.fromDegrees(35));
+		SHELF_PICKUP(Rotation2d.fromDegrees(56)),
+		SCORING(Rotation2d.fromDegrees(45));
 
 		public final Rotation2d rotation;
 

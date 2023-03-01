@@ -1,109 +1,36 @@
 package com.gemsrobotics.robot.autos;
 
-import com.gemsrobotics.robot.Constants;
 import com.gemsrobotics.robot.subsystems.Swerve;
-
-import java.util.List;
-
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
+
+import java.util.List;
+
+import static com.gemsrobotics.robot.Constants.Generation.getBackwardTrajectory;
+import static com.gemsrobotics.robot.Constants.Generation.getForwardTrajectory;
 
 public class TestAuto extends SequentialCommandGroup {
-    public TestAuto(Swerve s_Swerve){
-        TrajectoryConfig config =
-            new TrajectoryConfig(
-                    Constants.AutoConstants.kMaxSpeedMetersPerSecond,
-                    Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-                .setKinematics(Constants.Swerve.swerveKinematics);
+	public TestAuto(final Swerve swerve) {
+		final var start = new Translation2d(0, 0);
+		final var point1 = new Translation2d(Units.inchesToMeters(72), Units.inchesToMeters(72));
+		final var point2 = new Translation2d(Units.inchesToMeters(-72), 0);
 
-        TrajectoryConfig configB =
-                new TrajectoryConfig(
-                        Constants.AutoConstants.kMaxSpeedMetersPerSecond,
-                        Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-                        .setReversed(true)
-                        .setKinematics(Constants.Swerve.swerveKinematics);
+		final var trajectory1 = getForwardTrajectory(
+				new Pose2d(start, Rotation2d.fromDegrees(0)),
+				List.of(
+						point1,
+						start,
+						point2
+				),
+				new Pose2d(start, Rotation2d.fromDegrees(180)));
 
-        // An example trajectory to follow.  All units in meters.
-        Trajectory trajectory1 =
-            TrajectoryGenerator.generateTrajectory(
-                new Pose2d(new Translation2d(3, 7), Rotation2d.fromDegrees(0)),
-                List.of(),
-                new Pose2d(new Translation2d(Units.inchesToMeters(65), Units.inchesToMeters(220.0)), Rotation2d.fromDegrees(-180)),
-                config);
-
-        Trajectory trajectory2 =
-                TrajectoryGenerator.generateTrajectory(
-                        new Pose2d(new Translation2d(Units.inchesToMeters(65), Units.inchesToMeters(220.0)), Rotation2d.fromDegrees(-180)),
-                        List.of(),
-                        new Pose2d(new Translation2d(Units.inchesToMeters(100), Units.inchesToMeters(220.0)), Rotation2d.fromDegrees(-180)),
-                        configB);
-
-        Trajectory trajectory3 =
-                TrajectoryGenerator.generateTrajectory(
-                        new Pose2d(new Translation2d(Units.inchesToMeters(100), Units.inchesToMeters(220.0)), Rotation2d.fromDegrees(-180)),
-                        List.of(),
-                        new Pose2d(new Translation2d(3, 7), Rotation2d.fromDegrees(0.0)),
-                        configB);
-
-        var thetaController =
-            new ProfiledPIDController(
-                Constants.AutoConstants.kPThetaController, 0, 0, Constants.AutoConstants.kThetaControllerConstraints);
-        thetaController.enableContinuousInput(-Math.PI, Math.PI);
-
-        SwerveControllerCommand swerveControllerCommand1 =
-            new SwerveControllerCommand(
-                trajectory1,
-                s_Swerve::getPose,
-                Constants.Swerve.swerveKinematics,
-                new PIDController(Constants.AutoConstants.kPXController, 0, 0),
-                new PIDController(Constants.AutoConstants.kPYController, 0, 0),
-                thetaController,
-                s_Swerve::setModuleStates,
-                s_Swerve);
-
-        SwerveControllerCommand swerveControllerCommand2 =
-                new SwerveControllerCommand(
-                        trajectory2,
-                        s_Swerve::getPose,
-                        Constants.Swerve.swerveKinematics,
-                        new PIDController(Constants.AutoConstants.kPXController, 0, 0),
-                        new PIDController(Constants.AutoConstants.kPYController, 0, 0),
-                        thetaController,
-                        s_Swerve::setModuleStates,
-                        s_Swerve);
-
-        SwerveControllerCommand swerveControllerCommand3 =
-                new SwerveControllerCommand(
-                        trajectory3,
-                        s_Swerve::getPose,
-                        Constants.Swerve.swerveKinematics,
-                        new PIDController(Constants.AutoConstants.kPXController, 0, 0),
-                        new PIDController(Constants.AutoConstants.kPYController, 0, 0),
-                        thetaController,
-                        s_Swerve::setModuleStates,
-                        s_Swerve);
-
-
-        addCommands(
-            new InstantCommand(() -> s_Swerve.resetOdometry(trajectory1.getInitialPose())),
-            swerveControllerCommand1,
-            new InstantCommand(() -> s_Swerve.drive(new Translation2d(), 0, false, true)),
-            new WaitCommand(3.0),
-                new InstantCommand(() -> s_Swerve.resetOdometry(trajectory2.getInitialPose())),
-            swerveControllerCommand2,
-            swerveControllerCommand3,
-            new InstantCommand(() -> s_Swerve.drive(new Translation2d(), 0, false, true))
-        );
-    }
+		addCommands(
+				swerve.getResetOdometryCommand(trajectory1),
+				swerve.getAbsoluteTrackingCommand(trajectory1),
+				swerve.getStopCommand()
+		);
+	}
 }

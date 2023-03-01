@@ -2,14 +2,23 @@ package com.gemsrobotics.robot;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.trajectory.constraint.CentripetalAccelerationConstraint;
 import edu.wpi.first.math.util.Units;
 import com.gemsrobotics.lib.util.COTSFalconSwerveConstants;
 import com.gemsrobotics.lib.util.SwerveModuleConstants;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
+import java.util.List;
 
 
 public final class Constants {
@@ -36,8 +45,8 @@ public final class Constants {
         public static final COTSFalconSwerveConstants chosenModule =  COTSFalconSwerveConstants.SwerveX();
 
         /* Drivetrain Constants */
-        public static final double trackWidth = Units.inchesToMeters(21.5); //: This must be tuned to specific robot
-        public static final double wheelBase = Units.inchesToMeters(21.5); //: This must be tuned to specific robot
+        public static final double trackWidth = Units.inchesToMeters(22.5); //: This must be tuned to specific robot
+        public static final double wheelBase = Units.inchesToMeters(22.5); //: This must be tuned to specific robot
         public static final double wheelCircumference = chosenModule.wheelCircumference;
 
         /* Swerve Kinematics 
@@ -82,20 +91,20 @@ public final class Constants {
         public static final double angleKF = chosenModule.angleKF;
 
         /* Drive Motor PID Values */
-        public static final double driveKP = 0.05; //: This must be tuned to specific robot
+        public static final double driveKP = 0.056; //: This must be tuned to specific robot
         public static final double driveKI = 0.0;
         public static final double driveKD = 0.0;
         public static final double driveKF = 0.0;
 
         /* Drive Motor Characterization Values 
          * Divide SYSID values by 12 to convert from volts to percent output for CTRE */
-        public static final double driveKS = (0.32 / 12); //: This must be tuned to specific robot
-        public static final double driveKV = (1.51 / 12);
-        public static final double driveKA = (0.27 / 12);
+        public static final double driveKS = (0.48 / 12); //: This must be tuned to specific robot
+        public static final double driveKV = (1.87 / 12);
+        public static final double driveKA = (0.26 / 12);
 
         /* Swerve Profiling Values */
         /** Meters per Second */
-        public static final double maxSpeed = 6.08; //: This must be tuned to specific robot
+        public static final double maxSpeed = 4.95; //: This must be tuned to specific robot
 
         /** Analytically derived, Radians per Second */
         public static final double maxAngularVelocity = (maxSpeed / Math.hypot(trackWidth / 2.0, wheelBase / 2.0)) / 2.0;
@@ -147,18 +156,81 @@ public final class Constants {
     }
 
     public static final class AutoConstants { //: The below constants are used in the example auto, and must be tuned to specific robot
-        public static final double kMaxSpeedMetersPerSecond = 3;
-        public static final double kMaxAccelerationMetersPerSecondSquared = 4.5;
+        public static final double kMaxSpeedMetersPerSecond = 4.95;
+        public static final double kMaxAccelerationMetersPerSecondSquared = 2.5;
         public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
         public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
     
-        public static final double kPXController = 7;
-        public static final double kPYController = 7;
-        public static final double kPThetaController = 7;
+        public static final double kPXController = 1;
+        public static final double kPYController = 1;
+        public static final double kPThetaController = 5;
     
         /* Constraint for the motion profilied robot angle controller */
         public static final TrapezoidProfile.Constraints kThetaControllerConstraints =
             new TrapezoidProfile.Constraints(
                 kMaxAngularSpeedRadiansPerSecond, kMaxAngularSpeedRadiansPerSecondSquared);
+    }
+
+    public static final class Generation {
+        private static final TrajectoryConfig configForward =
+                new TrajectoryConfig(
+                        Constants.AutoConstants.kMaxSpeedMetersPerSecond,
+                        Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared)
+                        .setKinematics(Constants.Swerve.swerveKinematics);
+
+        private static final TrajectoryConfig configBackward =
+                new TrajectoryConfig(
+                        Constants.AutoConstants.kMaxSpeedMetersPerSecond,
+                        Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared)
+                        .setReversed(true)
+                        .setKinematics(Constants.Swerve.swerveKinematics);
+
+        public static final ProfiledPIDController thetaController = new ProfiledPIDController(
+                Constants.AutoConstants.kPThetaController,
+                0,
+                0,
+                Constants.AutoConstants.kThetaControllerConstraints);
+
+        public static final double maxCentripetalAcceleration = 3.0;
+
+        static {
+            configForward.addConstraint(new CentripetalAccelerationConstraint(maxCentripetalAcceleration));
+            configBackward.addConstraint(new CentripetalAccelerationConstraint(maxCentripetalAcceleration));
+            thetaController.enableContinuousInput(-Math.PI, Math.PI);
+        }
+
+        public static Trajectory getForwardTrajectory(
+                final Pose2d starterPose,
+                final List<Translation2d> poses,
+                final Pose2d endPose
+        ) {
+            return TrajectoryGenerator.generateTrajectory(
+                    starterPose,
+                    poses,
+                    endPose,
+                    configForward
+            );
+        }
+
+        public static Trajectory getForwardTrajectory(final Pose2d starterPose, final Pose2d endPose) {
+            return getForwardTrajectory(starterPose, List.of(), endPose);
+        }
+
+        public static Trajectory getBackwardTrajectory(
+                final Pose2d starterPose,
+                final List<Translation2d> poses,
+                final Pose2d endPose
+        ) {
+            return TrajectoryGenerator.generateTrajectory(
+                    starterPose,
+                    poses,
+                    endPose,
+                    configBackward
+            );
+        }
+
+        public static Trajectory getBackwardTrajectory(final Pose2d starterPose, final Pose2d endPose) {
+            return getBackwardTrajectory(starterPose, List.of(), endPose);
+        }
     }
 }

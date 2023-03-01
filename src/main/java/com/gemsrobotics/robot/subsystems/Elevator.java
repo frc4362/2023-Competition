@@ -8,6 +8,7 @@ import com.gemsrobotics.lib.util.Units;
 
 import com.gemsrobotics.robot.Constants;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -45,6 +46,7 @@ public final class Elevator implements Subsystem {
 	private final MotorController<TalonFX> m_motor;
 	private final PIDController m_controller;
 
+	private final SlewRateLimiter m_filter;
 	private double m_referenceMeters;
 	private Rotation2d m_externalAngle;
 
@@ -73,15 +75,20 @@ public final class Elevator implements Subsystem {
 		// 142.7
 		m_controller = new PIDController(12.2, 0.0, 0.0);
 
+		m_filter = new SlewRateLimiter(5);
+
 		m_referenceMeters = Position.SAFETY_BOTTOM.extensionMeters;
 		m_externalAngle = Rotation2d.fromDegrees(90);
 	}
 
+	// Units are in meters off of the bottom of the elevator
 	public enum Position {
 		TRUE_BOTTOM(0.0),
 		SAFETY_BOTTOM(0.005),
-		FRONT_SAFETY(0.5),
-		SCORING_MID(0.7),
+		FRONT_SAFETY(.48),
+		SHELF_PICKUP(.48),
+		SCORING_MID(0.85),
+		SCORING_HIGH(1.38),
 		SAFETY_TOP(1.38),
 		TRUE_TOP(1.38); // meters
 
