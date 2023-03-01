@@ -222,6 +222,7 @@ public final class Superstructure implements Subsystem {
 						.orElse(false)
 				&& m_claw.getObservedPiece().isPresent() && m_claw.getPieceConfidence()
 			) {
+				LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF));
 				setWantedState(WantedState.STOWED);
 				return SystemState.RETURN_TO_CLEAR_ELEVATOR;
 			}

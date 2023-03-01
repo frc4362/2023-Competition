@@ -58,6 +58,8 @@ public class Robot extends TimedRobot {
             Superstructure.getInstance()
     );
 
+    LEDController.getInstance().ifPresent(CommandScheduler.getInstance()::registerSubsystem);
+
     m_pickupButton.debounce(1.0, Debouncer.DebounceType.kRising);
     m_pickupButton.onTrue(new InstantCommand(
             () -> Superstructure.getInstance().setGoalPose(SuperstructurePose.SHELF_PICKUP)));

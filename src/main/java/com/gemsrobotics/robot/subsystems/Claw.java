@@ -145,7 +145,10 @@ public final class Claw implements Subsystem {
 	public Command requestGrab() {
 		return runOnce(() -> setGoal(Goal.GRIPPING))
 				   .andThen(new WaitUntilCommand(() -> getObservedPiece().isPresent() && getPieceConfidence())
-				   .raceWith(new WaitCommand(2.5).andThen(() -> setGoal(Goal.OPEN))));
+				   .raceWith(new WaitCommand(2.5).andThen(() -> {
+					   setGoal(Goal.OPEN);
+					   LEDController.getInstance().ifPresent(LEDController::requestPulseRed);
+				   })));
 	}
 
 	@Override
