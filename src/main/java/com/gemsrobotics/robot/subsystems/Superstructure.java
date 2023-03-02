@@ -22,12 +22,16 @@ public final class Superstructure implements Subsystem {
 		IDLE,
 		STARTING,
 		STOWED,
-		ATTAIN_POSE
+		ATTAIN_POSE,
+		INTAKING,
+		OUTTAKING
 	}
 
 	public enum SystemState {
 		IDLE,
 		STARTING,
+
+		// motion states
 		STOWED,
 		WAITING_FOR_INTAKE,
 		WAITING_FOR_WRIST,
@@ -35,7 +39,11 @@ public final class Superstructure implements Subsystem {
 		READY_FOR_FRONT_POSE,
 		ATTAINED_POSE,
 		RETURN_TO_CLEAR_ELEVATOR,
-		RETURN_TO_CLEAR_PIVOT
+		RETURN_TO_CLEAR_PIVOT,
+
+		// intaking states
+		INTAKING,
+		OUTTAKING
 	}
 
 	private final Timer m_stateChangedTimer, m_wantStateChangeTimer;
@@ -79,6 +87,10 @@ public final class Superstructure implements Subsystem {
 		return m_state;
 	}
 
+	public boolean hasScoringGoal() {
+		return m_poseGoal.isPresent();
+	}
+
 	public void setGoalPose(final SuperstructurePose goal) {
 		setWantedState(WantedState.ATTAIN_POSE);
 		m_poseGoal = Optional.of(goal);
@@ -100,6 +112,8 @@ public final class Superstructure implements Subsystem {
 			case STOWED:
 				newState = handleStowed();
 				break;
+
+			// motion states
 			case WAITING_FOR_INTAKE:
 				newState = handleWaitingForIntakeSafety();
 				break;
@@ -121,6 +135,12 @@ public final class Superstructure implements Subsystem {
 			case RETURN_TO_CLEAR_PIVOT:
 				newState = handleReturnToClearPivot();
 				break;
+
+			// intaking states
+			case INTAKING:
+				newState = handleIntaking();
+				break;
+
 			default:
 				newState = SystemState.IDLE;
 				break;
@@ -141,6 +161,15 @@ public final class Superstructure implements Subsystem {
 				return SystemState.STOWED;
 			case ATTAIN_POSE:
 				return SystemState.WAITING_FOR_INTAKE;
+			case INTAKING:
+				if (m_state == SystemState.STOWED
+					|| m_state == SystemState.INTAKING
+					|| m_state == SystemState.OUTTAKING
+				) {
+					return SystemState.INTAKING;
+				} else {
+					return m_state;
+				}
 			default:
 				return SystemState.IDLE;
 		}
@@ -150,8 +179,12 @@ public final class Superstructure implements Subsystem {
 		return SystemState.IDLE;
 	}
 
-	public SystemState handleStowed() {
-		m_intake.setReference(Intake.Position.RETRACTED);
+	private SystemState handleStowed() {
+		if (m_stateChanged) {
+			setGoalPoseCleared();
+		}
+
+		m_intake.setState(Intake.State.RETRACTED);
 		m_wrist.setReferencePosition(Wrist.Position.STOWED);
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
 		m_claw.setIdealStowedGoal();
@@ -163,9 +196,9 @@ public final class Superstructure implements Subsystem {
 		return applyWantedState();
 	}
 
-	public SystemState handleWaitingForIntakeSafety() {
-		m_pivot.setReference(Pivot.Position.RETURNED);
-		m_intake.setReference(Intake.Position.MIDDLE);
+	private SystemState handleWaitingForIntakeSafety() {
+		m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotSafety).orElse(Pivot.Position.STOWED));
+		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
 		m_claw.setGoal(m_poseGoal.map(SuperstructurePose::getClaw).orElse(Claw.Goal.CLOSED));
 
 		if (m_intake.atReference()) {
@@ -175,16 +208,17 @@ public final class Superstructure implements Subsystem {
 		}
 	}
 
-	public SystemState handleWaitingForWristSafety() {
-		m_pivot.setReference(Pivot.Position.STOWED);
-		m_elevator.setReference(Elevator.Position.FRONT_SAFETY);
+	private SystemState handleWaitingForWristSafety() {
+		m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotGoal).orElse(Pivot.Position.STOWED));
+		m_elevator.setReference(m_poseGoal.map(SuperstructurePose::getElevatorSafety).orElse(Elevator.Position.FRONT_SAFETY));
 		m_wrist.setReferencePosition(Wrist.Position.CLEAR);
-		m_intake.setReference(Intake.Position.MIDDLE);
+		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
+		m_claw.setGoal(m_poseGoal.map(SuperstructurePose::getClaw).orElse(Claw.Goal.CLOSED));
 
 		if (m_wrist.isSafeFromElevatorCollision()
 			&& m_elevator.atReference()
 		) {
-			return SystemState.EXTENDING_FOR_FRONT_POSE;//SystemState.WAITING_FOR_EXTENSION;
+			return SystemState.READY_FOR_FRONT_POSE;//SystemState.WAITING_FOR_EXTENSION;
 		} else if (m_stateWanted == WantedState.ATTAIN_POSE) {
 			return SystemState.WAITING_FOR_WRIST;
 		} else {
@@ -202,9 +236,9 @@ public final class Superstructure implements Subsystem {
 		}
 	}
 
-	public SystemState handleReadyForFrontPose() {
+	private SystemState handleReadyForFrontPose() {
 		m_elevator.setReference(m_poseGoal.map(SuperstructurePose::getElevator).orElse(Elevator.Position.FRONT_SAFETY));
-		m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivot).orElse(Pivot.Position.STOWED));
+		m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotGoal).orElse(Pivot.Position.STOWED));
 		m_wrist.setReferencePosition(m_poseGoal.map(SuperstructurePose::getWrist).orElse(Wrist.Position.CLEAR));
 		m_claw.setGoal(m_poseGoal.map(SuperstructurePose::getClaw).orElse(Claw.Goal.CLOSED));
 
@@ -215,14 +249,18 @@ public final class Superstructure implements Subsystem {
 		return SystemState.READY_FOR_FRONT_POSE;
 	}
 
-	public SystemState handleAttainedPose() {
+	private SystemState handleAttainedPose() {
 		if (m_stateWanted == WantedState.ATTAIN_POSE) {
-			if (m_poseGoal.map(SuperstructurePose::getType)
-						.map(type -> type == SuperstructurePose.Type.PICKUP)
-						.orElse(false)
+			final var poseType = m_poseGoal.map(SuperstructurePose::getType);
+			if (poseType.map(type -> type == SuperstructurePose.Type.PICKUP).orElse(false)
 				&& m_claw.getObservedPiece().isPresent() && m_claw.getPieceConfidence()
 			) {
 				LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF));
+				setWantedState(WantedState.STOWED);
+				return SystemState.RETURN_TO_CLEAR_ELEVATOR;
+			} else if (poseType.map(type -> type == SuperstructurePose.Type.PLACEMENT).orElse(false)
+						&& m_claw.getObservedPiece().isEmpty()
+			) {
 				setWantedState(WantedState.STOWED);
 				return SystemState.RETURN_TO_CLEAR_ELEVATOR;
 			}
@@ -233,9 +271,9 @@ public final class Superstructure implements Subsystem {
 		}
 	}
 
-	public SystemState handleReturnToClearElevator() {
-		m_elevator.setReference(Elevator.Position.FRONT_SAFETY);
-		m_pivot.setReference(Pivot.Position.STOWED);
+	private SystemState handleReturnToClearElevator() {
+		m_elevator.setReference(m_poseGoal.map(SuperstructurePose::getElevatorSafety).orElse(Elevator.Position.FRONT_SAFETY));
+//		m_pivot.setReference(Pivot.Position.STOWED);
 		m_wrist.setReferencePosition(Wrist.Position.CLEAR);
 
 		if (m_elevator.atReference()) {
@@ -245,10 +283,10 @@ public final class Superstructure implements Subsystem {
 		}
 	}
 
-	public SystemState handleReturnToClearPivot() {
+	private SystemState handleReturnToClearPivot() {
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
 		m_pivot.setReference(Pivot.Position.RETURNED);
-		m_intake.setReference(Intake.Position.MIDDLE);
+		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
 		m_wrist.setReferencePosition(Wrist.Position.STOWED);
 
 		if (m_elevator.atReference() && m_pivot.atReference()) {
@@ -256,6 +294,10 @@ public final class Superstructure implements Subsystem {
 		} else {
 			return SystemState.RETURN_TO_CLEAR_PIVOT;
 		}
+	}
+
+	private SystemState handleIntaking() {
+		return applyWantedState();
 	}
 
 	public void stopTimers() {

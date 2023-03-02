@@ -20,6 +20,7 @@ public class TeleopSwerve extends CommandBase {
     private DoubleSupplier m_strafe;
     private DoubleSupplier m_rotation;
     private BooleanSupplier m_isRobotCentric;
+    private BooleanSupplier m_slowDriveSup;
     private SlewRateLimiter m_translationFilter;
     private SlewRateLimiter m_strafeFilter;
     private SlewRateLimiter m_rotationFilter;
@@ -29,7 +30,8 @@ public class TeleopSwerve extends CommandBase {
             final DoubleSupplier translationSup,
             final DoubleSupplier strafeSup,
             final DoubleSupplier rotationSup,
-            final BooleanSupplier robotCentricSup
+            final BooleanSupplier robotCentricSup,
+            final BooleanSupplier slowDriveSup
     ) {
         m_swerve = swerve;
         addRequirements(swerve);
@@ -38,6 +40,8 @@ public class TeleopSwerve extends CommandBase {
         m_strafe = strafeSup;
         m_rotation = rotationSup;
         m_isRobotCentric = robotCentricSup;
+        m_slowDriveSup = slowDriveSup;
+
         m_translationFilter = new SlewRateLimiter(3);
         m_strafeFilter = new SlewRateLimiter(3);
         m_rotationFilter = new SlewRateLimiter(3);
@@ -61,10 +65,12 @@ public class TeleopSwerve extends CommandBase {
             translation = new Translation2d(translation.getNorm(), nearestPole);
         }
 
+        SmartDashboard.putBoolean("Robot Centric", m_isRobotCentric.getAsBoolean());
+
         /* Drive */
         m_swerve.setDrive(
-            translation.times(Constants.Swerve.maxSpeed),
-            rotationVal * Constants.Swerve.maxAngularVelocity, 
+            translation.times(Constants.Swerve.maxSpeed).times(m_slowDriveSup.getAsBoolean() ? 0.5 : 1.0),
+            rotationVal * Constants.Swerve.maxAngularVelocity * (m_slowDriveSup.getAsBoolean() ? 0.25 : 1.0),
             !m_isRobotCentric.getAsBoolean(),
             true
         );

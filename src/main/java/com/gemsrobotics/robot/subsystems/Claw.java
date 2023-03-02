@@ -44,9 +44,9 @@ public final class Claw implements Subsystem {
 	private final MotorController<TalonFX> m_motorGrip;
 	private final Timer m_pieceTimer;
 
-	private Goal m_state;
+	private Goal m_goal;
+	private IntakeState m_intakeState;
 	private boolean m_forceGrip;
-	private static double m_driveFromJoy = 0.0;
 
 	public static Claw getInstance() {
 		if (Objects.isNull(INSTANCE)) {
@@ -74,8 +74,9 @@ public final class Claw implements Subsystem {
 		m_pieceTimer.reset();
 		m_pieceTimer.stop();
 
+		m_goal = Goal.OPEN;
+		m_intakeState = IntakeState.NEUTRAL;
 		m_forceGrip = false;
-		m_state = Goal.OPEN;
 	}
 
 	public enum Goal {
@@ -85,13 +86,25 @@ public final class Claw implements Subsystem {
 		OPEN
 	}
 
+	public enum IntakeState {
+		NEUTRAL(0.0),
+		INTAKING(0.2),
+		OUTTAKING(-0.5);
+
+		public final double dutyCycle;
+
+		IntakeState(final double d) {
+			dutyCycle = d;
+		}
+	}
+
 	public enum ObservedPiece {
 		CUBE,
 		CONE
 	}
 
 	public void setGoal(final Goal state) {
-		m_state = state;
+		m_goal = state;
 	}
 
 	public Command requestDropPiece() {
@@ -135,12 +148,22 @@ public final class Claw implements Subsystem {
 		}
 	}
 
-	public void setDriveJoy(boolean is_drive) {
-		if(is_drive) {
-			m_driveFromJoy = CLAW_DRIVE_VOLTAGE;
-		} else {
-			m_driveFromJoy = 0.0;
-		}
+	public void setIntakeState(final IntakeState state) {
+		m_intakeState = state;
+	}
+
+	public Command requestGrab() {
+		return runOnce(
+				() -> {
+					setGoal(Goal.GRIPPING);
+					setIntakeState(IntakeState.INTAKING);
+				})
+					   .andThen(new WaitUntilCommand(() -> getObservedPiece().isPresent() && getPieceConfidence())
+										.raceWith(new WaitCommand(2.5).andThen(() -> {
+											setGoal(Goal.OPEN);
+											LEDController.getInstance().ifPresent(LEDController::requestPulseRed);
+										})))
+					   .finallyDo(interrupted -> setIntakeState(IntakeState.NEUTRAL));
 	}
 
 	public void log() {
@@ -149,23 +172,14 @@ public final class Claw implements Subsystem {
 		SmartDashboard.putNumber("Claw Grip Control Effort", m_motorGrip.getVoltageOutput());
 		SmartDashboard.putString("Claw Observed Piece", getObservedPiece().map(ObservedPiece::toString).orElse("NONE"));
 		SmartDashboard.putBoolean("Claw Force Closed", m_forceGrip);
-		SmartDashboard.putString("Claw State", m_state.toString());
-	}
-
-	public Command requestGrab() {
-		return runOnce(() -> setGoal(Goal.GRIPPING))
-				   .andThen(new WaitUntilCommand(() -> getObservedPiece().isPresent() && getPieceConfidence())
-				   .raceWith(new WaitCommand(2.5).andThen(() -> {
-					   setGoal(Goal.OPEN);
-					   LEDController.getInstance().ifPresent(LEDController::requestPulseRed);
-				   })));
+		SmartDashboard.putString("Claw State", m_goal.toString());
 	}
 
 	@Override
 	public void periodic() {
 		final var observedPiece = getObservedPiece();
 
-		m_motorDrive.setVoltage(m_driveFromJoy);
+		m_motorDrive.setDutyCycle(m_intakeState.dutyCycle);
 
 		if (observedPiece.isPresent()) {
 			m_pieceTimer.start();
@@ -174,10 +188,9 @@ public final class Claw implements Subsystem {
 			m_pieceTimer.stop();
 		}
 
-		switch (m_state) {
+		switch (m_goal) {
 			case GRIPPING:
 				m_motorGrip.setVoltage(-1.0);
-				//m_motorDrive.setVoltage(0.0);
 
 				setForceGrip(getPieceConfidence());
 				break;
@@ -185,9 +198,7 @@ public final class Claw implements Subsystem {
 			case CLOSED:
 				if (m_forceGrip || m_motorGrip.getPositionRotations() > CONE_THRESHOLD_ROTATIONS) {
 					m_motorGrip.setVoltage(-1.0);
-					//m_motorDrive.setVoltage(0.0);
 				} else {
-					//m_motorDrive.setVoltage(0.0);
 					m_motorGrip.setVoltage(0.0);
 				}
 				break;
@@ -195,17 +206,14 @@ public final class Claw implements Subsystem {
 			case OPEN:
 				if (m_forceGrip) {
 					m_motorGrip.setVoltage(-1.0);
-					//m_motorDrive.setVoltage(0.0);
 				} else if (m_motorGrip.getPositionRotations() < GRIP_OPEN_POSITION) {
 					m_motorGrip.setVoltage(2.0);
 				} else {
-					//m_motorDrive.setVoltage(0.0);
 					m_motorGrip.setVoltage(0.0);
 				}
 				break;
 
 			case NEUTRAL:
-				//m_motorDrive.setVoltage(0.0);
 				m_motorGrip.setVoltage(0.0);
 				break;
 		}

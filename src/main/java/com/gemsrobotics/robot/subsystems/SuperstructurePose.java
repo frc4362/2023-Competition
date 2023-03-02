@@ -76,7 +76,7 @@ public final class SuperstructurePose {
         return m_type;
     }
 
-    public Pivot.Position getPivot() {
+    public Pivot.Position getPivotGoal() {
         return m_rotationPivot;
     }
 
@@ -90,5 +90,29 @@ public final class SuperstructurePose {
 
     public Claw.Goal getClaw() {
         return m_clawGoal;
+    }
+
+    public Elevator.Position getElevatorSafety() {
+        if (m_type == Type.PICKUP) {
+            return Elevator.Position.SHELF_PICKUP;
+        } else {
+            return Elevator.Position.FRONT_SAFETY;
+        }
+    }
+
+    public Pivot.Position getPivotSafety() {
+        if (m_type == Type.PICKUP) {
+            return Pivot.Position.SHELF_PICKUP;
+        } else {
+            return Pivot.Position.RETURNED;
+        }
+    }
+
+    public Intake.State getIntake() {
+        if (m_type == Type.PICKUP) {
+            return Intake.State.RETRACTED;
+        } else {
+            return Intake.State.MIDDLE;
+        }
     }
 }

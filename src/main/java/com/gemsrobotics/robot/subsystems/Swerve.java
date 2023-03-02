@@ -30,7 +30,7 @@ import java.util.Objects;
 import static java.lang.Math.abs;
 
 public final class Swerve extends SubsystemBase {
-    public static final int MOVING_AVERAGE_SIZE = 7;
+    public static final int MOVING_AVERAGE_SIZE = 5;
     private static Swerve INSTANCE;
 
     public static Swerve getInstance() {
@@ -69,7 +69,7 @@ public final class Swerve extends SubsystemBase {
         zeroGyro();
 
         m_deltaPitchFilter = LinearFilter.movingAverage(MOVING_AVERAGE_SIZE);
-        m_lastPitch = m_imu.getPitch();
+        m_lastPitch = m_imu.getRoll();
         m_deltaPitchAverage = 0.0;
 
         m_fieldDisplay = new Field2d();
@@ -149,7 +149,7 @@ public final class Swerve extends SubsystemBase {
 
     public SwerveModuleState[] getModuleStates() {
         SwerveModuleState[] states = new SwerveModuleState[4];
-        for (final var mod : m_swerveModules){
+        for (final var mod : m_swerveModules) {
             states[mod.moduleNumber] = mod.getState();
         }
         return states;
@@ -157,7 +157,7 @@ public final class Swerve extends SubsystemBase {
 
     public SwerveModulePosition[] getModulePositions() {
         SwerveModulePosition[] positions = new SwerveModulePosition[4];
-        for (final var mod : m_swerveModules){
+        for (final var mod : m_swerveModules) {
             positions[mod.moduleNumber] = mod.getPosition();
         }
         return positions;
@@ -172,22 +172,22 @@ public final class Swerve extends SubsystemBase {
     }
 
     public Rotation2d getPitch() {
-        return Rotation2d.fromDegrees(m_imu.getPitch());
+        return Rotation2d.fromDegrees(m_imu.getRoll());
     }
 
-    public Rotation2d getDeltaPitchAverage() {
+    public Rotation2d getDeltaPitch() {
         return Rotation2d.fromDegrees(m_deltaPitchAverage);
     }
 
     public Command waitForPitchAround(final Rotation2d targetPitch, final double tolerance) {
-        return new WaitUntilCommand(() -> abs(getDeltaPitchAverage().minus(targetPitch).getDegrees()) < tolerance);
+        return new WaitUntilCommand(() -> abs(getPitch().minus(targetPitch).getDegrees()) < tolerance);
     }
 
     public Command waitForPitchAround(final Rotation2d targetPitch) {
         return waitForPitchAround(targetPitch, 1.5);
     }
 
-    public void resetModulesToAbsolute(){
+    public void resetModulesToAbsolute() {
         for (final var mod : m_swerveModules) {
             mod.resetToAbsolute();
         }
@@ -216,6 +216,14 @@ public final class Swerve extends SubsystemBase {
 
     public Command getResetOdometryCommand(final Trajectory trajectory) {
         return runOnce(() -> resetOdometry(trajectory.getInitialPose()));
+    }
+
+    public void log() {
+        for (final var mod : m_swerveModules) {
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+        }
     }
 
     @Override
@@ -251,10 +259,5 @@ public final class Swerve extends SubsystemBase {
         SmartDashboard.putNumber("Pitch", m_imu.getPitch());
         SmartDashboard.putNumber("Roll", m_imu.getRoll());
         SmartDashboard.putString("Pose", m_swervePoseEstimator.getEstimatedPosition().toString());
-        for (final var mod : m_swerveModules) {
-//            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
-//            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
-        }
     }
 }

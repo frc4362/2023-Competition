@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class LEDController implements Subsystem {
-	private static final boolean IS_INSTALLED = false;
+	private static final boolean IS_INSTALLED = true;
 
 	private static LEDController INSTANCE;
 
@@ -24,9 +24,8 @@ public final class LEDController implements Subsystem {
 		return Optional.ofNullable(INSTANCE);
 	}
 
-	private static final int CANDLE_ID = 0;
+	private static final int CANDLE_ID = 30;
 	private static final String CANDLE_BUS = Constants.CANBusses.MAIN;
-	private static final int LED_COUNT = 300;
 	private final Command m_pulseRedCommand;
 	private final CANdle m_candle;
 
@@ -39,7 +38,7 @@ public final class LEDController implements Subsystem {
 		configAll.statusLedOffWhenActive = true;
 		configAll.disableWhenLOS = false;
 		configAll.stripType = CANdle.LEDStripType.GRB;
-		configAll.brightnessScalar = 0.1;
+		configAll.brightnessScalar = 0.2;
 		configAll.vBatOutputMode = CANdle.VBatOutputMode.Modulated;
 		m_candle.configAllSettings(configAll, 100);
 
@@ -88,5 +87,10 @@ public final class LEDController implements Subsystem {
 
 	public void requestPulseRed() {
 		m_pulseRedCommand.schedule();
+	}
+
+	@Override
+	public void periodic() {
+//		m_candle.modu
 	}
 }

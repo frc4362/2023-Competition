@@ -3,6 +3,7 @@ package com.gemsrobotics.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.gemsrobotics.lib.drivers.MotorController;
 import com.gemsrobotics.lib.drivers.MotorControllerFactory;
+import com.gemsrobotics.lib.util.MathUtils;
 import com.gemsrobotics.robot.Constants;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
@@ -39,7 +40,7 @@ public class Pivot extends ProfiledPIDSubsystem {
 			kP = 126/2,//126,
 			kD = 2;
 
-	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(0.5);
+	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(2.0);
 
 	private final MotorController<TalonFX> m_motor;
 	private final PIDController m_controllerPivot;
@@ -82,7 +83,7 @@ public class Pivot extends ProfiledPIDSubsystem {
 		STARTING(Rotation2d.fromDegrees(54)),
 		STOWED(Rotation2d.fromDegrees(54)),
 		RETURNED(Rotation2d.fromDegrees(62)),
-		SHELF_PICKUP(Rotation2d.fromDegrees(56)),
+		SHELF_PICKUP(Rotation2d.fromDegrees(54)),
 		SCORING(Rotation2d.fromDegrees(42));
 
 		public final Rotation2d rotation;
@@ -105,11 +106,15 @@ public class Pivot extends ProfiledPIDSubsystem {
 	}
 
 	public boolean atReference(final Rotation2d tolerance) {
-		return abs(m_controllerPivot.getPositionError()) < tolerance.getRadians();
+		return abs(getErrorDegrees()) < tolerance.getDegrees();
 	}
 
 	public boolean atReference() {
 		return atReference(TOLERANCE);
+	}
+
+	public double getErrorDegrees() {
+		return m_reference.getDegrees() - getAngle().getDegrees();
 	}
 
 	public void log() {
@@ -117,13 +122,16 @@ public class Pivot extends ProfiledPIDSubsystem {
 		SmartDashboard.putNumber("Pivot Drawn Amps", m_motor.getDrawnCurrentAmps());
 		SmartDashboard.putNumber("Pivot Control Effort", m_motor.getVoltageOutput());
 		SmartDashboard.putNumber("Pivot Velocity", m_motor.getVelocityAngularRadiansPerSecond());
+		SmartDashboard.putNumber("Pivot Error", getErrorDegrees());
+		SmartDashboard.putNumber("Pivot AtRef", atReference() ? 1.0 : 0.0);
 	}
 
 	@Override
 	public void periodic() {
 //		super.periodic();
 		final var ff = m_feedforward.calculate(getAngle().getRadians(), 0.0);
-		m_motor.setVoltage(m_controllerPivot.calculate(getAngle().getRadians(), m_reference.getRadians()), ff);
+		final var feedback = m_controllerPivot.calculate(getAngle().getRadians(), m_reference.getRadians());
+		m_motor.setVoltage(MathUtils.coerce(-9, feedback, 9), ff);
 	}
 
 	@Override
