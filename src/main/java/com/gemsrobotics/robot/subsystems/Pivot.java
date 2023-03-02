@@ -83,7 +83,7 @@ public class Pivot extends ProfiledPIDSubsystem {
 		STOWED(Rotation2d.fromDegrees(54)),
 		RETURNED(Rotation2d.fromDegrees(62)),
 		SHELF_PICKUP(Rotation2d.fromDegrees(56)),
-		SCORING(Rotation2d.fromDegrees(45));
+		SCORING(Rotation2d.fromDegrees(42));
 
 		public final Rotation2d rotation;
 

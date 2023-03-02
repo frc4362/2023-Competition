@@ -36,6 +36,8 @@ public final class Claw implements Subsystem {
 	private static final double GRIP_DRIVE_VOLTAGE = 2.0;
 	private static final double GRIP_OPEN_POSITION = -0.24;//TODO
 
+	private static final double CLAW_DRIVE_VOLTAGE = 2.0;
+
 	/*We liked running -1 Volts at 50A */
 
 	private final MotorController<TalonFX> m_motorDrive;
@@ -44,6 +46,7 @@ public final class Claw implements Subsystem {
 
 	private Goal m_state;
 	private boolean m_forceGrip;
+	private static double m_driveFromJoy = 0.0;
 
 	public static Claw getInstance() {
 		if (Objects.isNull(INSTANCE)) {
@@ -63,7 +66,6 @@ public final class Claw implements Subsystem {
 		m_motorGrip.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
 		m_motorGrip.setGearingParameters(GEARING_MULTIPLIER, 1.0);
 		m_motorGrip.setOpenLoopVoltageRampRate(0.6);
-//		m_motorGrip.setCurrentLimit(50); //does not work??
 
 		m_motorGrip.getInternalController().configStatorCurrentLimit(
 				new StatorCurrentLimitConfiguration(true, 40, 40, 5));
@@ -133,6 +135,14 @@ public final class Claw implements Subsystem {
 		}
 	}
 
+	public void setDriveJoy(boolean is_drive) {
+		if(is_drive) {
+			m_driveFromJoy = CLAW_DRIVE_VOLTAGE;
+		} else {
+			m_driveFromJoy = 0.0;
+		}
+	}
+
 	public void log() {
 		SmartDashboard.putNumber("Claw Grip Rotations", m_motorGrip.getPositionRotations());
 		SmartDashboard.putNumber("Claw Grip Drawn Amps", m_motorGrip.getDrawnCurrentAmps());
@@ -155,6 +165,8 @@ public final class Claw implements Subsystem {
 	public void periodic() {
 		final var observedPiece = getObservedPiece();
 
+		m_motorDrive.setVoltage(m_driveFromJoy);
+
 		if (observedPiece.isPresent()) {
 			m_pieceTimer.start();
 		} else {
@@ -164,36 +176,36 @@ public final class Claw implements Subsystem {
 
 		switch (m_state) {
 			case GRIPPING:
-				m_motorGrip.setVoltage(-1.0);//-1.0
-				m_motorDrive.setVoltage(0.0);
+				m_motorGrip.setVoltage(-1.0);
+				//m_motorDrive.setVoltage(0.0);
 
 				setForceGrip(getPieceConfidence());
 				break;
 
 			case CLOSED:
 				if (m_forceGrip || m_motorGrip.getPositionRotations() > CONE_THRESHOLD_ROTATIONS) {
-					m_motorGrip.setVoltage(-1.0);//-1.0
-					m_motorDrive.setVoltage(0.0);
+					m_motorGrip.setVoltage(-1.0);
+					//m_motorDrive.setVoltage(0.0);
 				} else {
-					m_motorDrive.setVoltage(0.0);
+					//m_motorDrive.setVoltage(0.0);
 					m_motorGrip.setVoltage(0.0);
 				}
 				break;
 
 			case OPEN:
 				if (m_forceGrip) {
-					m_motorGrip.setVoltage(-1.0);//-1.0
-					m_motorDrive.setVoltage(0.0);
+					m_motorGrip.setVoltage(-1.0);
+					//m_motorDrive.setVoltage(0.0);
 				} else if (m_motorGrip.getPositionRotations() < GRIP_OPEN_POSITION) {
 					m_motorGrip.setVoltage(2.0);
 				} else {
-					m_motorDrive.setVoltage(0.0);
+					//m_motorDrive.setVoltage(0.0);
 					m_motorGrip.setVoltage(0.0);
 				}
 				break;
 
 			case NEUTRAL:
-				m_motorDrive.setVoltage(0.0);
+				//m_motorDrive.setVoltage(0.0);
 				m_motorGrip.setVoltage(0.0);
 				break;
 		}

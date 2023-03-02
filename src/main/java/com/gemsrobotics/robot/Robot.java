@@ -24,11 +24,13 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
  */
 public class Robot extends TimedRobot {
   private CommandBase m_autonomousCommand;
-  private final XboxController m_joystick = new XboxController(0);
-  private final JoystickButton m_pickupButton = new JoystickButton(m_joystick, XboxController.Button.kA.value);
-  private final JoystickButton m_placementMidButton = new JoystickButton(m_joystick, XboxController.Button.kB.value);
-  private final JoystickButton m_placementHighButton = new JoystickButton(m_joystick, XboxController.Button.kY.value);
-  private final JoystickButton m_resetButton = new JoystickButton(m_joystick, XboxController.Button.kX.value);
+  private final XboxController m_joystickPilot = new XboxController(0);
+  private final XboxController m_joystickCopilot = new XboxController(1);
+  private final JoystickButton m_pickupButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kA.value);
+  private final JoystickButton m_placementMidButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kB.value);
+  private final JoystickButton m_placementHighButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kY.value);
+  private final JoystickButton m_resetButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kX.value);
+  //private final JoystickButton m_resetFieldOrientation = new JoystickButton(m_joystickCopilot, XboxController.Button.kY.value);
 
   private boolean m_selfPickup = false;
 
@@ -60,27 +62,27 @@ public class Robot extends TimedRobot {
 
     LEDController.getInstance().ifPresent(CommandScheduler.getInstance()::registerSubsystem);
 
-    m_pickupButton.debounce(1.0, Debouncer.DebounceType.kRising);
+    m_pickupButton.debounce(0.2, Debouncer.DebounceType.kRising);
     m_pickupButton.onTrue(new InstantCommand(
             () -> Superstructure.getInstance().setGoalPose(SuperstructurePose.SHELF_PICKUP)));
 
-    m_placementMidButton.debounce(1.0, Debouncer.DebounceType.kRising);
+    m_placementMidButton.debounce(0.2, Debouncer.DebounceType.kRising);
     m_placementMidButton.onTrue(new InstantCommand(
             () -> Superstructure.getInstance().setGoalPose(SuperstructurePose.MID_PLACE)));
 
-    m_placementHighButton.debounce(1.0, Debouncer.DebounceType.kRising);
+    m_placementHighButton.debounce(0.2, Debouncer.DebounceType.kRising);
     m_placementHighButton.onTrue(new InstantCommand(
             () -> Superstructure.getInstance().setGoalPose(SuperstructurePose.HIGH_PLACE)));
 
-    m_resetButton.debounce(1.0, Debouncer.DebounceType.kRising);
+    m_resetButton.debounce(0.2, Debouncer.DebounceType.kRising);
     m_resetButton.onTrue(new InstantCommand(Superstructure.getInstance()::setGoalPoseCleared));
 
     m_teleopSwerveCommand = new TeleopSwerve(
             Swerve.getInstance(),
-            () -> -m_joystick.getLeftY(),
-            () -> -m_joystick.getLeftX(),
-            () -> -m_joystick.getRightX(),
-            m_joystick::getLeftBumper
+            () -> -m_joystickPilot.getLeftY(),
+            () -> -m_joystickPilot.getLeftX(),
+            () -> -m_joystickPilot.getRightX(),
+            m_joystickPilot::getLeftBumper
     );
 
     m_autonomousCommand = new AutoBalanceCommand(Swerve.getInstance());
@@ -153,9 +155,10 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    if (m_joystick.getStartButtonPressed()) {
+    if (m_joystickPilot.getStartButtonPressed()) {
       Swerve.getInstance().zeroGyro();
     }
+    Claw.getInstance().setDriveJoy(m_joystickPilot.getYButton()); 
 
 //    if (m_joystick.getAButtonPressed()) {
 //      m_selfPickup = !m_selfPickup;
@@ -173,7 +176,7 @@ public class Robot extends TimedRobot {
 //      Superstructure.getInstance().setWantedState(Superstructure.WantedState.STOWED);
 //    }
 
-    if (m_joystick.getRightBumperPressed()) {
+    if (m_joystickPilot.getRightBumperPressed()) {
       if (m_dropPiece) {
         Claw.getInstance().requestDropPiece().schedule();
       } else {
