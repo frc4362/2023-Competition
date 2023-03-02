@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
@@ -43,6 +44,7 @@ public final class Robot extends TimedRobot {
           m_wantCubeButton,
           m_wantNoneButton;
 
+  private SendableChooser<Command> m_autonChooser;
   private Command m_teleopSwerveCommand, m_autonomousCommand;
 
   private static final String PIVOT_KEY = "pivot_angle";
@@ -133,7 +135,9 @@ public final class Robot extends TimedRobot {
             m_joystickPilot::getBButton
     );
 
-    m_autonomousCommand = new BalanceAuton(Swerve.getInstance());
+    m_autonChooser = new SendableChooser<>();
+    m_autonChooser.addOption("None", new WaitCommand(1.0));
+    m_autonChooser.addOption("Auto balance auton", new BalanceAuton(Swerve.getInstance()));
 
 //    SmartDashboard.putNumber(PIVOT_KEY, Pivot.Position.STARTING.rotation.getDegrees());
 //    SmartDashboard.putNumber(ELEVATOR_KEY, 0.0);
@@ -176,6 +180,7 @@ public final class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     // schedule the autonomous command (example)
+    m_autonomousCommand = m_autonChooser.getSelected();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
@@ -208,7 +213,6 @@ public final class Robot extends TimedRobot {
     if (m_joystickPilot.getLeftBumperPressed()) {
       Swerve.getInstance().zeroGyro();
     }
-
 
 //    if (m_joystickPilot.getLeftBumper() && !m_superstructure.hasScoringGoal()) {
 //      m_superstructure.setWantedState(Superstructure.WantedState.INTAKING);
