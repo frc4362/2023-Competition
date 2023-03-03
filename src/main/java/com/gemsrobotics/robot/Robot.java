@@ -6,11 +6,9 @@ package com.gemsrobotics.robot;
 
 import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.commands.BalanceAuton;
-import com.gemsrobotics.robot.commands.DriveOntoPlatform;
 import com.gemsrobotics.robot.commands.TeleopSwerve;
 import com.gemsrobotics.robot.subsystems.*;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
@@ -99,20 +97,22 @@ public final class Robot extends TimedRobot {
     ));
 
     m_wantConeButton = new POVButton(m_joystickCopilot, 0);
-    m_wantConeButton.onTrue(Commands.runOnce(
-            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.WANTS_CONE))));
+//    m_wantConeButton.onTrue(Commands.runOnce(
+//            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.WANTS_CONE))));
 
     m_wantCubeButton = new POVButton(m_joystickCopilot, 180);
-    m_wantCubeButton.onTrue(Commands.runOnce(
-            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.WANTS_CUBE))));
+//    m_wantCubeButton.onTrue(Commands.runOnce(
+//            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.WANTS_CUBE))));
 
     m_wantNoneButton = new POVButton(m_joystickCopilot, 90);
-    m_wantNoneButton.onTrue(Commands.runOnce(
-            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF))));
+//    m_wantNoneButton.onTrue(Commands.runOnce(
+//            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF))));
 
     m_clawOpenButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kRightBumper.value);
     m_clawOpenButton.debounce(2.5, Debouncer.DebounceType.kRising);
     m_clawOpenButton.onTrue(Claw.getInstance().requestDropPiece());
+
+    m_outtakingButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kA.value);
 
     // pilot controls
     m_joystickPilot = new XboxController(Constants.PILOT_PORT);
@@ -160,7 +160,7 @@ public final class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     Intake.getInstance().log();
-    Pivot.getInstance().log();
+//    Pivot.getInstance().log();
 //    Elevator.getInstance().log();
     //Wrist.getInstance().log();
     Claw.getInstance().log();
@@ -169,7 +169,7 @@ public final class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    CommandScheduler.getInstance().cancel(m_teleopSwerveCommand);
+    Swerve.getInstance().setDefaultCommand(Commands.run(() -> {}));
   }
 
   @Override
@@ -203,7 +203,8 @@ public final class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
-    CommandScheduler.getInstance().schedule(m_teleopSwerveCommand);
+    Swerve.getInstance().getCurrentCommand().cancel();
+    Swerve.getInstance().setDefaultCommand(m_teleopSwerveCommand);
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
   }
 

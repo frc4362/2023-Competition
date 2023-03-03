@@ -19,7 +19,10 @@ import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 public final class Claw implements Subsystem {
 	private static final boolean DO_LOGGING = false;
 	public static final double CONE_THRESHOLD_ROTATIONS = -.31;
+
 	public static final double PIECE_DETECTION_TIME = 0.5;
+	public static final int PIECE_GRIPPED_THRESHOLD_AMPS = 35;
+	public static final double NOTHING_THRESHOLD_ROTATIONS = -.35;
 
 	private static Claw INSTANCE = null;
 
@@ -38,8 +41,7 @@ public final class Claw implements Subsystem {
 
 	private static final double CLAW_DRIVE_VOLTAGE = 2.0;
 
-	/*We liked running -1 Volts at 50A */
-
+	/*We liked running -1 Volts at 40A */
 	private final MotorController<TalonFX> m_motorDrive;
 	private final MotorController<TalonFX> m_motorGrip;
 	private final Timer m_pieceTimer;
@@ -123,11 +125,11 @@ public final class Claw implements Subsystem {
 	}
 
 	public Optional<ObservedPiece> getObservedPiece() {
-		if (Math.abs(m_motorGrip.getDrawnCurrentAmps()) < 35) {
+		if (Math.abs(m_motorGrip.getDrawnCurrentAmps()) < PIECE_GRIPPED_THRESHOLD_AMPS) {
 			return Optional.empty();
 		}
 
-		if (m_motorGrip.getPositionRotations() < -.35) {
+		if (m_motorGrip.getPositionRotations() < NOTHING_THRESHOLD_ROTATIONS) {
 			return Optional.empty();
 		} else if (m_motorGrip.getPositionRotations() < CONE_THRESHOLD_ROTATIONS) {
 			return Optional.of(ObservedPiece.CONE);
@@ -169,10 +171,10 @@ public final class Claw implements Subsystem {
 	public void log() {
 		SmartDashboard.putNumber("Claw Grip Rotations", m_motorGrip.getPositionRotations());
 		SmartDashboard.putNumber("Claw Grip Drawn Amps", m_motorGrip.getDrawnCurrentAmps());
-		SmartDashboard.putNumber("Claw Grip Control Effort", m_motorGrip.getVoltageOutput());
+//		SmartDashboard.putNumber("Claw Grip Control Effort", m_motorGrip.getVoltageOutput());
 		SmartDashboard.putString("Claw Observed Piece", getObservedPiece().map(ObservedPiece::toString).orElse("NONE"));
-		SmartDashboard.putBoolean("Claw Force Closed", m_forceGrip);
-		SmartDashboard.putString("Claw State", m_goal.toString());
+//		SmartDashboard.putBoolean("Claw Force Closed", m_forceGrip);
+//		SmartDashboard.putString("Claw State", m_goal.toString());
 	}
 
 	@Override

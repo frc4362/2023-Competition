@@ -38,7 +38,7 @@ public final class LEDController implements Subsystem {
 		configAll.statusLedOffWhenActive = true;
 		configAll.disableWhenLOS = false;
 		configAll.stripType = CANdle.LEDStripType.GRB;
-		configAll.brightnessScalar = 0.2;
+		configAll.brightnessScalar = 1.0;
 		configAll.vBatOutputMode = CANdle.VBatOutputMode.Modulated;
 		m_candle.configAllSettings(configAll, 100);
 
@@ -80,10 +80,10 @@ public final class LEDController implements Subsystem {
 		setLEDs(m_state.color);
 	}
 
-	@Override
-	public Command getDefaultCommand() {
-		return run(this::conformToState);
-	}
+//	@Override
+//	public Command getDefaultCommand() {
+////		return run(this::conformToState);
+//	}
 
 	public void requestPulseRed() {
 		m_pulseRedCommand.schedule();
@@ -91,6 +91,6 @@ public final class LEDController implements Subsystem {
 
 	@Override
 	public void periodic() {
-//		m_candle.modu
+		m_candle.setLEDs(255, 0, 0);
 	}
 }

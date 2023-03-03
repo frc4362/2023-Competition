@@ -66,7 +66,7 @@ public final class Swerve extends SubsystemBase {
          */
         Timer.delay(1.0);
         resetModulesToAbsolute();
-        zeroGyro();
+        m_imu.setYaw(180);
 
         m_deltaPitchFilter = LinearFilter.movingAverage(MOVING_AVERAGE_SIZE);
         m_lastPitch = m_imu.getRoll();
