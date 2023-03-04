@@ -7,6 +7,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.gemsrobotics.robot.subsystems.Intake.State;
+
 public final class Superstructure implements Subsystem {
 	private static Superstructure INSTANCE;
 
@@ -162,14 +164,7 @@ public final class Superstructure implements Subsystem {
 			case ATTAIN_POSE:
 				return SystemState.WAITING_FOR_INTAKE;
 			case INTAKING:
-				if (m_state == SystemState.STOWED
-					|| m_state == SystemState.INTAKING
-					|| m_state == SystemState.OUTTAKING
-				) {
-					return SystemState.INTAKING;
-				} else {
-					return m_state;
-				}
+				return SystemState.INTAKING;
 			default:
 				return SystemState.IDLE;
 		}
@@ -187,7 +182,7 @@ public final class Superstructure implements Subsystem {
 		m_intake.setState(Intake.State.RETRACTED);
 		m_wrist.setReferencePosition(Wrist.Position.STOWED);
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
-		m_claw.setIdealStowedGoal();
+		// m_claw.setIdealStowedGoal();
 
 		if (m_intake.atReference()) {
 			m_pivot.setReference(Pivot.Position.STOWED);
@@ -242,6 +237,10 @@ public final class Superstructure implements Subsystem {
 		m_wrist.setReferencePosition(m_poseGoal.map(SuperstructurePose::getWrist).orElse(Wrist.Position.CLEAR));
 		m_claw.setGoal(m_poseGoal.map(SuperstructurePose::getClaw).orElse(Claw.Goal.CLOSED));
 
+		// if (m_elevator.getHeightMeters() > 0.41 && m_elevator.getReferenceMeters() > Elevator.Position.FRONT_SAFETY.extensionMeters) {
+		// 	m_intake.setState(State.RETRACTED);
+		// }
+
 		if (m_elevator.atReference() && m_pivot.atReference() && m_wrist.atReference()) {
 			return SystemState.ATTAINED_POSE;
 		}
@@ -250,6 +249,8 @@ public final class Superstructure implements Subsystem {
 	}
 
 	private SystemState handleAttainedPose() {
+		// m_intake.setState(State.RETRACTED);
+
 		if (m_stateWanted == WantedState.ATTAIN_POSE) {
 			final var poseType = m_poseGoal.map(SuperstructurePose::getType);
 			if (poseType.map(type -> type == SuperstructurePose.Type.PICKUP).orElse(false)
@@ -273,6 +274,7 @@ public final class Superstructure implements Subsystem {
 
 	private SystemState handleReturnToClearElevator() {
 		m_elevator.setReference(m_poseGoal.map(SuperstructurePose::getElevatorSafety).orElse(Elevator.Position.FRONT_SAFETY));
+		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
 //		m_pivot.setReference(Pivot.Position.STOWED);
 		m_wrist.setReferencePosition(Wrist.Position.CLEAR);
 
@@ -297,6 +299,8 @@ public final class Superstructure implements Subsystem {
 	}
 
 	private SystemState handleIntaking() {
+		m_intake.setState(State.INTAKING);
+
 		return applyWantedState();
 	}
 

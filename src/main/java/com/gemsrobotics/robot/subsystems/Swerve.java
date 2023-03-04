@@ -30,7 +30,6 @@ import java.util.Objects;
 import static java.lang.Math.abs;
 
 public final class Swerve extends SubsystemBase {
-    public static final int MOVING_AVERAGE_SIZE = 5;
     private static Swerve INSTANCE;
 
     public static Swerve getInstance() {
@@ -40,6 +39,9 @@ public final class Swerve extends SubsystemBase {
 
         return INSTANCE;
     }
+
+    private static final double STARTING_ANGLE = 180;
+    private static final int MOVING_AVERAGE_SIZE = 5;
 
     private final SwerveDrivePoseEstimator m_swervePoseEstimator;
     private final List<SwerveModule> m_swerveModules;
@@ -66,14 +68,14 @@ public final class Swerve extends SubsystemBase {
          */
         Timer.delay(1.0);
         resetModulesToAbsolute();
-        m_imu.setYaw(180);
+        m_imu.setYaw(STARTING_ANGLE);
 
         m_deltaPitchFilter = LinearFilter.movingAverage(MOVING_AVERAGE_SIZE);
         m_lastPitch = m_imu.getRoll();
         m_deltaPitchAverage = 0.0;
 
         m_fieldDisplay = new Field2d();
-        SmartDashboard.putData(m_fieldDisplay);
+        // SmartDashboard.putData(m_fieldDisplay);
 
         // TODO tune the filter
         m_swervePoseEstimator = new SwerveDrivePoseEstimator(
@@ -81,7 +83,7 @@ public final class Swerve extends SubsystemBase {
                 getYaw(),
                 getModulePositions(),
 //                new Pose2d(new Translation2d(3, 7), Rotation2d.fromDegrees(0)),
-                new Pose2d(new Translation2d(0, 0), Rotation2d.fromDegrees(0)),
+                new Pose2d(new Translation2d(0, 0), Rotation2d.fromDegrees(STARTING_ANGLE)),
                 VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
                 VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10)));
     }
@@ -121,7 +123,7 @@ public final class Swerve extends SubsystemBase {
                                 );
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.maxSpeed);
 
-        for (final var mod : m_swerveModules){
+        for (final var mod : m_swerveModules) {
             mod.setDesiredState(swerveModuleStates[mod.moduleNumber], isOpenLoop);
         }
     }
@@ -193,6 +195,16 @@ public final class Swerve extends SubsystemBase {
         }
     }
 
+    public boolean isPivotAllowed() {
+        boolean allowed = true;
+
+        for (final var module : m_swerveModules) {
+            allowed &= (Math.abs(module.getState().speedMetersPerSecond) < (Constants.Swerve.maxSpeed * 5));
+        }
+
+        return allowed;
+    }
+
     public Command getAbsoluteTrackingCommand(final Trajectory trajectory) {
         return new SwerveControllerCommand(
                 trajectory,
@@ -255,9 +267,9 @@ public final class Swerve extends SubsystemBase {
         final var fixedPose = FIELD.minus(estimated.getTranslation());
         m_fieldDisplay.setRobotPose(new Pose2d(fixedPose, estimated.getRotation().rotateBy(Rotation2d.fromDegrees(180))));
 
-        SmartDashboard.putNumber("Yaw", m_imu.getYaw());
-        SmartDashboard.putNumber("Pitch", m_imu.getPitch());
-        SmartDashboard.putNumber("Roll", m_imu.getRoll());
-        SmartDashboard.putString("Pose", m_swervePoseEstimator.getEstimatedPosition().toString());
+        // SmartDashboard.putNumber("Yaw", m_imu.getYaw());
+        // SmartDashboard.putNumber("Pitch", m_imu.getPitch());
+        // SmartDashboard.putNumber("Roll", m_imu.getRoll());
+        // SmartDashboard.putString("Pose", m_swervePoseEstimator.getEstimatedPosition().toString());
     }
 }

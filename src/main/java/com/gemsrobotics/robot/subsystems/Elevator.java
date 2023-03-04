@@ -138,6 +138,10 @@ public final class Elevator implements Subsystem {
 		return m_motor.getPositionMeters();
 	}
 
+	public double getReferenceMeters() {
+		return m_referenceMeters;
+	}
+
 	public void log() {
 		SmartDashboard.putNumber("Elevator Extension", getHeightMeters());
 		SmartDashboard.putNumber("Elevator Angle", m_externalAngle.getDegrees());

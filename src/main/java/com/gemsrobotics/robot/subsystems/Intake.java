@@ -30,7 +30,7 @@ public class Intake implements Subsystem {
 	private static final int DRIVE_MOTOR_ID = 20;
 	private static final String DRIVE_MOTOR_BUS = Constants.CANBusses.MAIN;
 
-	private static final double kP = 0.02 * 1.5;
+	private static final double kP = 0.017 * 1.5;
 	private static final double kG = -0.6 / 12.0; // convert to duty cycle
 
 	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(2.0);
@@ -46,7 +46,7 @@ public class Intake implements Subsystem {
 	public enum State {
 		RETRACTED(0, 0.0),
 		BALANCED(9_800, 0.0),
-		MIDDLE(25_000, 0.0),
+		MIDDLE(17_000, 0.0), // 25 000
 		EXTENDED(38_000, 0.0),
 		INTAKING(38_000, 0.25);
 
@@ -101,9 +101,9 @@ public class Intake implements Subsystem {
 		m_mode = Mode.DISABLED;
 	}
 
-	public void setState(final State reference) {
+	public void setState(final State state) {
 		m_mode = Mode.POSITION;
-		m_state = reference;
+		m_state = state;
 	}
 
 	public Rotation2d getApproximateAngle() {

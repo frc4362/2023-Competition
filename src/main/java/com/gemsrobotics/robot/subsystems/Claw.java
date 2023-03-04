@@ -9,6 +9,7 @@ import com.gemsrobotics.lib.drivers.MotorController;
 import com.gemsrobotics.lib.drivers.MotorControllerFactory;
 import com.gemsrobotics.robot.Constants;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -17,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 
 public final class Claw implements Subsystem {
-	private static final boolean DO_LOGGING = false;
 	public static final double CONE_THRESHOLD_ROTATIONS = -.31;
 
 	public static final double PIECE_DETECTION_TIME = 0.5;
@@ -49,6 +49,7 @@ public final class Claw implements Subsystem {
 	private Goal m_goal;
 	private IntakeState m_intakeState;
 	private boolean m_forceGrip;
+	private double m_lastOpenTime;
 
 	public static Claw getInstance() {
 		if (Objects.isNull(INSTANCE)) {
@@ -79,6 +80,7 @@ public final class Claw implements Subsystem {
 		m_goal = Goal.OPEN;
 		m_intakeState = IntakeState.NEUTRAL;
 		m_forceGrip = false;
+		m_lastOpenTime = Double.NEGATIVE_INFINITY;
 	}
 
 	public enum Goal {
@@ -91,7 +93,7 @@ public final class Claw implements Subsystem {
 	public enum IntakeState {
 		NEUTRAL(0.0),
 		INTAKING(0.2),
-		OUTTAKING(-0.5);
+		OUTTAKING(-0.2);
 
 		public final double dutyCycle;
 
@@ -107,13 +109,23 @@ public final class Claw implements Subsystem {
 
 	public void setGoal(final Goal state) {
 		m_goal = state;
+
+		if (m_goal == Goal.OPEN) {
+			m_lastOpenTime = Timer.getFPGATimestamp();
+		}
 	}
 
 	public Command requestDropPiece() {
 		return runOnce(() -> {
-			setGoal(Goal.OPEN);
+			if (getObservedPiece().map(piece -> piece == ObservedPiece.CUBE).orElse(false)) {
+				setIntakeState(IntakeState.OUTTAKING);
+			} else {
+				setGoal(Goal.OPEN);
+			}
 			setForceGrip(false);
-		});
+		})
+		.andThen(new WaitCommand(1.0))
+		.finallyDo(interrupted -> setIntakeState(IntakeState.NEUTRAL));
 	}
 
 	public void setForceGrip(final boolean grip) {
@@ -143,8 +155,10 @@ public final class Claw implements Subsystem {
 	}
 
 	public void setIdealStowedGoal() {
-		if (m_forceGrip || (getObservedPiece().isPresent() && getPieceConfidence())) {
+		if (DriverStation.isAutonomous() || (getObservedPiece().isPresent() && getPieceConfidence())) {
 			setGoal(Goal.GRIPPING);
+		} else if ((Timer.getFPGATimestamp() - m_lastOpenTime) < 2.) {
+			setGoal(Goal.OPEN);
 		} else {
 			setGoal(Goal.CLOSED);
 		}

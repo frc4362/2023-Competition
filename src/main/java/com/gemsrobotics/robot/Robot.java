@@ -5,14 +5,19 @@
 package com.gemsrobotics.robot;
 
 import com.gemsrobotics.lib.LimelightHelpers;
+import com.gemsrobotics.robot.commands.AttainPoseCommand;
 import com.gemsrobotics.robot.commands.BalanceAuton;
 import com.gemsrobotics.robot.commands.TeleopSwerve;
 import com.gemsrobotics.robot.subsystems.*;
+import com.gemsrobotics.robot.subsystems.Claw.Goal;
+import com.gemsrobotics.robot.subsystems.Superstructure.WantedState;
+
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
@@ -91,10 +96,10 @@ public final class Robot extends TimedRobot {
     m_resetPoseButton.onTrue(Commands.runOnce(m_superstructure::setGoalPoseCleared, m_superstructure));
 
     m_forceClawDriveButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
-    m_forceClawDriveButton.toggleOnTrue(Commands.startEnd(
-            () -> Claw.getInstance().setIntakeState(Claw.IntakeState.INTAKING),
-            () -> Claw.getInstance().setIntakeState(Claw.IntakeState.NEUTRAL)
-    ));
+    // m_forceClawDriveButton.toggleOnTrue(Commands.startEnd(
+    //         () -> Claw.getInstance().setIntakeState(Claw.IntakeState.OUTTAKING),
+    //         () -> Claw.getInstance().setIntakeState(Claw.IntakeState.NEUTRAL)
+    // ));
 
     m_wantConeButton = new POVButton(m_joystickCopilot, 0);
 //    m_wantConeButton.onTrue(Commands.runOnce(
@@ -111,6 +116,7 @@ public final class Robot extends TimedRobot {
     m_clawOpenButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kRightBumper.value);
     m_clawOpenButton.debounce(2.5, Debouncer.DebounceType.kRising);
     m_clawOpenButton.onTrue(Claw.getInstance().requestDropPiece());
+    // m_clawOpenButton.onFalse(Commands.runOnce(() -> Claw.getInstance().setGoal(Goal.CLOSED)));
 
     m_outtakingButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kA.value);
 
@@ -124,20 +130,27 @@ public final class Robot extends TimedRobot {
     m_resetFieldOrientationButton = new JoystickButton(m_joystickPilot, XboxController.Button.kStart.value);
     m_resetFieldOrientationButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
 
-    m_intakingButton = new JoystickButton(m_joystickPilot, XboxController.Button.kLeftBumper.value);
-
+    m_intakingButton = new JoystickButton(m_joystickPilot, XboxController.Button.kA.value);
+    // m_intakingButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING)));
+    // m_intakingButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
+    
     m_teleopSwerveCommand = new TeleopSwerve(
             Swerve.getInstance(),
             () -> -m_joystickPilot.getLeftY(),
             () -> -m_joystickPilot.getLeftX(),
             () -> -m_joystickPilot.getRightX(),
             m_joystickPilot::getBButton,
-            m_joystickPilot::getBButton
+            Pivot.getInstance()::isInhibitingMobility
     );
 
     m_autonChooser = new SendableChooser<>();
     m_autonChooser.addOption("None", new WaitCommand(1.0));
     m_autonChooser.addOption("Auto balance auton", new BalanceAuton(Swerve.getInstance()));
+    m_autonChooser.addOption("Grab piece auton", Claw.getInstance().requestGrab()
+      // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
+      // .andThen(new WaitUntilCommand(() -> Claw.getInstance().getObservedPiece().isPresent() && Claw.getInstance().getPieceConfidence()))
+      .andThen(new WaitCommand(5)));
+    SmartDashboard.putData(m_autonChooser);
 
 //    SmartDashboard.putNumber(PIVOT_KEY, Pivot.Position.STARTING.rotation.getDegrees());
 //    SmartDashboard.putNumber(ELEVATOR_KEY, 0.0);
@@ -159,17 +172,17 @@ public final class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    Intake.getInstance().log();
+    // Intake.getInstance().log();
 //    Pivot.getInstance().log();
 //    Elevator.getInstance().log();
     //Wrist.getInstance().log();
-    Claw.getInstance().log();
+    // Claw.getInstance().log();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    Swerve.getInstance().setDefaultCommand(Commands.run(() -> {}));
+    m_teleopSwerveCommand.cancel();
   }
 
   @Override
@@ -203,8 +216,7 @@ public final class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
-    Swerve.getInstance().getCurrentCommand().cancel();
-    Swerve.getInstance().setDefaultCommand(m_teleopSwerveCommand);
+    m_teleopSwerveCommand.schedule();
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
   }
 
@@ -214,12 +226,6 @@ public final class Robot extends TimedRobot {
     if (m_joystickPilot.getLeftBumperPressed()) {
       Swerve.getInstance().zeroGyro();
     }
-
-//    if (m_joystickPilot.getLeftBumper() && !m_superstructure.hasScoringGoal()) {
-//      m_superstructure.setWantedState(Superstructure.WantedState.INTAKING);
-//    } else if (m_joystickPilot.getLeftBumperReleased() && m_superstructure.hasScoringGoal()) {
-//      m_superstructure.setWantedState(Superstructure.WantedState.STOWED);
-//    }
 
 //    Claw.getInstance().setIntakeState(m_joystickPilot.getYButton());
 

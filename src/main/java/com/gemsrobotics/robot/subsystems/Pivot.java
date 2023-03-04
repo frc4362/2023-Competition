@@ -101,7 +101,7 @@ public class Pivot extends ProfiledPIDSubsystem {
 		setReference(setpoint.rotation);
 	}
 
-	public Rotation2d getAngle() {
+		public Rotation2d getAngle() {
 		return Rotation2d.fromRotations(m_motor.getPositionRotations()).rotateBy(Position.STARTING.rotation);
 	}
 
@@ -117,13 +117,17 @@ public class Pivot extends ProfiledPIDSubsystem {
 		return m_reference.getDegrees() - getAngle().getDegrees();
 	}
 
+	public boolean isInhibitingMobility() {
+		return getAngle().getDegrees() < 50;
+	}
+
 	public void log() {
-		SmartDashboard.putNumber("Pivot Angle", getAngle().getDegrees());
-		SmartDashboard.putNumber("Pivot Drawn Amps", m_motor.getDrawnCurrentAmps());
-		SmartDashboard.putNumber("Pivot Control Effort", m_motor.getVoltageOutput());
-		SmartDashboard.putNumber("Pivot Velocity", m_motor.getVelocityAngularRadiansPerSecond());
-		SmartDashboard.putNumber("Pivot Error", getErrorDegrees());
-		SmartDashboard.putNumber("Pivot AtRef", atReference() ? 1.0 : 0.0);
+		// SmartDashboard.putNumber("Pivot Angle", getAngle().getDegrees());
+		// SmartDashboard.putNumber("Pivot Drawn Amps", m_motor.getDrawnCurrentAmps());
+		// SmartDashboard.putNumber("Pivot Control Effort", m_motor.getVoltageOutput());
+		// SmartDashboard.putNumber("Pivot Velocity", m_motor.getVelocityAngularRadiansPerSecond());
+		// SmartDashboard.putNumber("Pivot Error", getErrorDegrees());
+		// SmartDashboard.putNumber("Pivot AtRef", atReference() ? 1.0 : 0.0);
 	}
 
 	@Override

@@ -21,6 +21,7 @@ public class TeleopSwerve extends CommandBase {
     private DoubleSupplier m_rotation;
     private BooleanSupplier m_isRobotCentric;
     private BooleanSupplier m_slowDriveSup;
+
     private SlewRateLimiter m_translationFilter;
     private SlewRateLimiter m_strafeFilter;
     private SlewRateLimiter m_rotationFilter;
@@ -65,11 +66,11 @@ public class TeleopSwerve extends CommandBase {
             translation = new Translation2d(translation.getNorm(), nearestPole);
         }
 
-        SmartDashboard.putBoolean("Robot Centric", m_isRobotCentric.getAsBoolean());
+        // SmartDashboard.putBoolean("Robot Centric", m_isRobotCentric.getAsBoolean());
 
         /* Drive */
         m_swerve.setDrive(
-            translation.times(Constants.Swerve.maxSpeed).times(m_slowDriveSup.getAsBoolean() ? 0.5 : 1.0),
+            translation.times(Constants.Swerve.maxSpeed).times(m_slowDriveSup.getAsBoolean() ? 0.25 : 1.0),
             rotationVal * Constants.Swerve.maxAngularVelocity * (m_slowDriveSup.getAsBoolean() ? 0.25 : 1.0),
             !m_isRobotCentric.getAsBoolean(),
             true

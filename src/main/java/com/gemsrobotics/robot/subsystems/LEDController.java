@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class LEDController implements Subsystem {
-	private static final boolean IS_INSTALLED = true;
+	private static final boolean IS_INSTALLED = false;
 
 	private static LEDController INSTANCE;
 
@@ -73,7 +73,7 @@ public final class LEDController implements Subsystem {
 	}
 
 	private void setLEDs(final Color color) {
-		m_candle.setLEDs((int) color.red, (int) color.blue, (int) color.green);
+		m_candle.setLEDs((int) color.red, (int) color.blue, (int) color.green, 0, 0, 60);
 	}
 
 	private void conformToState() {
@@ -91,6 +91,6 @@ public final class LEDController implements Subsystem {
 
 	@Override
 	public void periodic() {
-		m_candle.setLEDs(255, 0, 0);
+		// m_candle.setLEDs(0, 0, 255);
 	}
 }
