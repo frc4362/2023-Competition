@@ -1,6 +1,8 @@
 package com.gemsrobotics.robot.commands;
 
+import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.lib.util.Rotation2dPlus;
+import com.gemsrobotics.lib.util.Units;
 import com.gemsrobotics.robot.Constants;
 import com.gemsrobotics.robot.subsystems.Swerve;
 
@@ -10,21 +12,26 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 
-public class TeleopSwerve extends CommandBase {    
-    private Swerve m_swerve;
-    private DoubleSupplier m_translation;
-    private DoubleSupplier m_strafe;
-    private DoubleSupplier m_rotation;
-    private BooleanSupplier m_isRobotCentric;
-    private BooleanSupplier m_slowDriveSup;
+public final class TeleopSwerve extends CommandBase {    
+    private static final boolean DO_SNAP_TURN = true;
+    private static final int FILTER_SIZE = 3;
+    private static final boolean DO_VISION_ADJUSTMENT = false;
+    private static final double VISION_kP = -0.1;
 
-    private SlewRateLimiter m_translationFilter;
-    private SlewRateLimiter m_strafeFilter;
-    private SlewRateLimiter m_rotationFilter;
+    private final Swerve m_swerve;
+    private final DoubleSupplier m_translation;
+    private final DoubleSupplier m_strafe;
+    private final DoubleSupplier m_rotation;
+    private final BooleanSupplier m_isRobotCentric;
+    private final BooleanSupplier m_placing;
+    private final BooleanSupplier m_useVision;
+
+    private final SlewRateLimiter m_translationFilter;
+    private final SlewRateLimiter m_strafeFilter;
+    private final SlewRateLimiter m_rotationFilter;
 
     public TeleopSwerve(
             final Swerve swerve,
@@ -32,7 +39,8 @@ public class TeleopSwerve extends CommandBase {
             final DoubleSupplier strafeSup,
             final DoubleSupplier rotationSup,
             final BooleanSupplier robotCentricSup,
-            final BooleanSupplier slowDriveSup
+            final BooleanSupplier placementModeSup,
+            final BooleanSupplier useVisionSup
     ) {
         m_swerve = swerve;
         addRequirements(swerve);
@@ -41,11 +49,12 @@ public class TeleopSwerve extends CommandBase {
         m_strafe = strafeSup;
         m_rotation = rotationSup;
         m_isRobotCentric = robotCentricSup;
-        m_slowDriveSup = slowDriveSup;
+        m_placing = placementModeSup;
+        m_useVision = useVisionSup;
 
-        m_translationFilter = new SlewRateLimiter(3);
-        m_strafeFilter = new SlewRateLimiter(3);
-        m_rotationFilter = new SlewRateLimiter(3);
+        m_translationFilter = new SlewRateLimiter(FILTER_SIZE);
+        m_strafeFilter = new SlewRateLimiter(FILTER_SIZE);
+        m_rotationFilter = new SlewRateLimiter(FILTER_SIZE);
     }
 
     @Override
@@ -62,16 +71,33 @@ public class TeleopSwerve extends CommandBase {
         var translation = new Translation2d(translationVal, strafeVal);
         var nearestPole = new Rotation2dPlus(translation.getAngle()).getNearestPole();
 
-        if (Math.abs(translation.getAngle().minus(nearestPole).getDegrees()) < 5.0) {
+        final double threshold;
+
+        if (m_placing.getAsBoolean()) {
+            threshold = 10;
+        } else {
+            threshold = 5;
+        }
+
+        if (Math.abs(translation.getAngle().minus(nearestPole).getDegrees()) < threshold) {
             translation = new Translation2d(translation.getNorm(), nearestPole);
         }
 
-        // SmartDashboard.putBoolean("Robot Centric", m_isRobotCentric.getAsBoolean());
+		final double visionError = LimelightHelpers.getTX("");
+        final double visionFeedback = VISION_kP * visionError;
+
+        final double placementAngleFeedback = Constants.Generation.thetaController.calculate(
+            m_swerve.getYaw().getRadians(),
+            Units.degrees2Rads(180)
+        );
+
+        final double openLoopRotation = rotationVal * Constants.Swerve.maxAngularVelocity;
+        final var openLoopTranslation = translation.times(Constants.Swerve.maxSpeed).times(m_placing.getAsBoolean() ? 0.25 : 1.0);
 
         /* Drive */
         m_swerve.setDrive(
-            translation.times(Constants.Swerve.maxSpeed).times(m_slowDriveSup.getAsBoolean() ? 0.25 : 1.0),
-            rotationVal * Constants.Swerve.maxAngularVelocity * (m_slowDriveSup.getAsBoolean() ? 0.25 : 1.0),
+            (DO_VISION_ADJUSTMENT && m_useVision.getAsBoolean()) ? new Translation2d(openLoopTranslation.getX(), visionFeedback) : openLoopTranslation,
+            m_placing.getAsBoolean() ? placementAngleFeedback : openLoopRotation,
             !m_isRobotCentric.getAsBoolean(),
             true
         );

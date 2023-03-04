@@ -1,5 +1,7 @@
-package com.gemsrobotics.robot.commands;
+package com.gemsrobotics.robot.autos;
 
+import com.gemsrobotics.robot.commands.SuperstructurePoseCommand;
+import com.gemsrobotics.robot.commands.DriveOntoPlatform;
 import com.gemsrobotics.robot.subsystems.Claw;
 import com.gemsrobotics.robot.subsystems.SuperstructurePose;
 import com.gemsrobotics.robot.subsystems.Swerve;
@@ -8,11 +10,11 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 
-public class BalanceAuton extends SequentialCommandGroup {
-	public BalanceAuton(final Swerve swerve) {
+public class BalanceAuto extends SequentialCommandGroup {
+	public BalanceAuto(final Swerve swerve) {
 		addCommands(
 				Claw.getInstance().requestGrab(),
-				new AttainPoseCommand(SuperstructurePose.HIGH_PLACE),
+				new SuperstructurePoseCommand(SuperstructurePose.HIGH_PLACE),
 				new DriveOntoPlatform(swerve, new Translation2d(.35, 0.0), .35),
 				new InstantCommand(() -> swerve.setDrivePercent(new Translation2d(.32, 0.0), 0.0, true, false)),
 				new WaitCommand(.8),

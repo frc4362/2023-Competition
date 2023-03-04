@@ -165,6 +165,8 @@ public final class Superstructure implements Subsystem {
 				return SystemState.WAITING_FOR_INTAKE;
 			case INTAKING:
 				return SystemState.INTAKING;
+			case OUTTAKING:
+				return SystemState.OUTTAKING;
 			default:
 				return SystemState.IDLE;
 		}

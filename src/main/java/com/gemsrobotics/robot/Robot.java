@@ -5,11 +5,13 @@
 package com.gemsrobotics.robot;
 
 import com.gemsrobotics.lib.LimelightHelpers;
-import com.gemsrobotics.robot.commands.AttainPoseCommand;
-import com.gemsrobotics.robot.commands.BalanceAuton;
+import com.gemsrobotics.robot.autos.BalanceAuto;
+import com.gemsrobotics.robot.autos.SideAuto;
+import com.gemsrobotics.robot.commands.SuperstructurePoseCommand;
 import com.gemsrobotics.robot.commands.TeleopSwerve;
 import com.gemsrobotics.robot.subsystems.*;
 import com.gemsrobotics.robot.subsystems.Claw.Goal;
+import com.gemsrobotics.robot.subsystems.Superstructure.SystemState;
 import com.gemsrobotics.robot.subsystems.Superstructure.WantedState;
 
 import edu.wpi.first.math.filter.Debouncer;
@@ -39,7 +41,6 @@ public final class Robot extends TimedRobot {
           m_clawOpenButton,
           m_clawCloseButton,
           m_resetFieldOrientationButton,
-          m_forceClawDriveButton,
           m_intakingButton,
           m_outtakingButton;
   public POVButton
@@ -81,25 +82,35 @@ public final class Robot extends TimedRobot {
 
     m_pickupButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kA.value);
     m_pickupButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
-    m_pickupButton.onTrue(Commands.runOnce(() -> m_superstructure.setGoalPose(SuperstructurePose.SHELF_PICKUP), m_superstructure));
+    m_pickupButton.onTrue(Commands.runOnce(() -> {
+      if (Superstructure.getInstance().getSystemState() == SystemState.STOWED) {
+        m_superstructure.setGoalPose(SuperstructurePose.SHELF_PICKUP);
+      }
+    }, m_superstructure));
 
     m_placementMidButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kB.value);
     m_placementMidButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
-    m_placementMidButton.onTrue(Commands.runOnce(() -> m_superstructure.setGoalPose(SuperstructurePose.MID_PLACE), m_superstructure));
+    m_placementMidButton.onTrue(Commands.runOnce(() -> {
+      if (Superstructure.getInstance().getSystemState() == SystemState.STOWED) {
+        m_superstructure.setGoalPose(SuperstructurePose.MID_PLACE);
+      }
+    }, m_superstructure));
 
     m_placementHighButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kY.value);
     m_placementHighButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
-    m_placementHighButton.onTrue(Commands.runOnce(() -> m_superstructure.setGoalPose(SuperstructurePose.HIGH_PLACE), m_superstructure));
+    m_placementHighButton.onTrue(Commands.runOnce(() -> {
+      if (Superstructure.getInstance().getSystemState() == SystemState.STOWED) {
+        m_superstructure.setGoalPose(SuperstructurePose.HIGH_PLACE);
+      }
+    }, m_superstructure));
 
     m_resetPoseButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kX.value);
     m_resetPoseButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
     m_resetPoseButton.onTrue(Commands.runOnce(m_superstructure::setGoalPoseCleared, m_superstructure));
-
-    m_forceClawDriveButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
-    // m_forceClawDriveButton.toggleOnTrue(Commands.startEnd(
-    //         () -> Claw.getInstance().setIntakeState(Claw.IntakeState.OUTTAKING),
-    //         () -> Claw.getInstance().setIntakeState(Claw.IntakeState.NEUTRAL)
-    // ));
+    
+    m_outtakingButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
+    m_outtakingButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.OUTTAKING)));
+    m_outtakingButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
 
     m_wantConeButton = new POVButton(m_joystickCopilot, 0);
 //    m_wantConeButton.onTrue(Commands.runOnce(
@@ -116,9 +127,6 @@ public final class Robot extends TimedRobot {
     m_clawOpenButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kRightBumper.value);
     m_clawOpenButton.debounce(2.5, Debouncer.DebounceType.kRising);
     m_clawOpenButton.onTrue(Claw.getInstance().requestDropPiece());
-    // m_clawOpenButton.onFalse(Commands.runOnce(() -> Claw.getInstance().setGoal(Goal.CLOSED)));
-
-    m_outtakingButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kA.value);
 
     // pilot controls
     m_joystickPilot = new XboxController(Constants.PILOT_PORT);
@@ -131,8 +139,8 @@ public final class Robot extends TimedRobot {
     m_resetFieldOrientationButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
 
     m_intakingButton = new JoystickButton(m_joystickPilot, XboxController.Button.kA.value);
-    // m_intakingButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING)));
-    // m_intakingButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
+    m_intakingButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING)));
+    m_intakingButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
     
     m_teleopSwerveCommand = new TeleopSwerve(
             Swerve.getInstance(),
@@ -145,11 +153,10 @@ public final class Robot extends TimedRobot {
 
     m_autonChooser = new SendableChooser<>();
     m_autonChooser.addOption("None", new WaitCommand(1.0));
-    m_autonChooser.addOption("Auto balance auton", new BalanceAuton(Swerve.getInstance()));
-    m_autonChooser.addOption("Grab piece auton", Claw.getInstance().requestGrab()
+    m_autonChooser.addOption("Auto balance auton", new BalanceAuto(Swerve.getInstance()));
+    m_autonChooser.addOption("Side auton NEEDS TESTING", new SideAuto());
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
       // .andThen(new WaitUntilCommand(() -> Claw.getInstance().getObservedPiece().isPresent() && Claw.getInstance().getPieceConfidence()))
-      .andThen(new WaitCommand(5)));
     SmartDashboard.putData(m_autonChooser);
 
 //    SmartDashboard.putNumber(PIVOT_KEY, Pivot.Position.STARTING.rotation.getDegrees());
