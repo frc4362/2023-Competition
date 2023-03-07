@@ -21,8 +21,10 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.button.Button;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -56,22 +58,22 @@ public final class Robot extends TimedRobot {
   private static final String INTAKE_KEY = "intake_pos";
   private static final String WRIST_KEY = "wrist_angle_pos";
 
+  private Trigger m_pilotShootButton;
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   @Override
   public void robotInit() {
-    CommandScheduler.getInstance().registerSubsystem(
-            Claw.getInstance(),
-            Intake.getInstance(),
-            Wrist.getInstance(),
-            Pivot.getInstance(),
-            Elevator.getInstance(),
-            ArmManager.getInstance(),
-            Swerve.getInstance(),
-            Superstructure.getInstance()
-    );
+    CommandScheduler.getInstance().registerSubsystem(Claw.getInstance());
+    CommandScheduler.getInstance().registerSubsystem(Intake.getInstance());
+    CommandScheduler.getInstance().registerSubsystem(Wrist.getInstance());
+    CommandScheduler.getInstance().registerSubsystem(Pivot.getInstance());
+    CommandScheduler.getInstance().registerSubsystem(Elevator.getInstance());
+    CommandScheduler.getInstance().registerSubsystem(ArmManager.getInstance());
+    CommandScheduler.getInstance().registerSubsystem(Swerve.getInstance());
+    CommandScheduler.getInstance().registerSubsystem(Superstructure.getInstance());
 
     LEDController.getInstance().ifPresent(CommandScheduler.getInstance()::registerSubsystem);
 
@@ -109,20 +111,18 @@ public final class Robot extends TimedRobot {
     m_resetPoseButton.onTrue(Commands.runOnce(m_superstructure::setGoalPoseCleared, m_superstructure));
     
     m_outtakingButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
-    m_outtakingButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.OUTTAKING)));
-    m_outtakingButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
 
     m_wantConeButton = new POVButton(m_joystickCopilot, 0);
 //    m_wantConeButton.onTrue(Commands.runOnce(
 //            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.WANTS_CONE))));
 
-    m_wantCubeButton = new POVButton(m_joystickCopilot, 180);
-//    m_wantCubeButton.onTrue(Commands.runOnce(
-//            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.WANTS_CUBE))));
+    m_wantCubeButton = new POVButton(m_joystickCopilot, 0);
+    m_wantCubeButton.onTrue(Commands.runOnce(
+           () -> LimelightHelpers.setLEDMode_ForceOn("")));
 
-    m_wantNoneButton = new POVButton(m_joystickCopilot, 90);
-//    m_wantNoneButton.onTrue(Commands.runOnce(
-//            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF))));
+    m_wantNoneButton = new POVButton(m_joystickCopilot, 180);
+    m_wantNoneButton.onTrue(Commands.runOnce(
+           () -> LimelightHelpers.setLEDMode_ForceOff("")));
 
     m_clawOpenButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kRightBumper.value);
     m_clawOpenButton.debounce(2.5, Debouncer.DebounceType.kRising);
@@ -138,9 +138,16 @@ public final class Robot extends TimedRobot {
     m_resetFieldOrientationButton = new JoystickButton(m_joystickPilot, XboxController.Button.kStart.value);
     m_resetFieldOrientationButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
 
-    m_intakingButton = new JoystickButton(m_joystickPilot, XboxController.Button.kA.value);
-    m_intakingButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING)));
-    m_intakingButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
+    m_intakingButton = new JoystickButton(m_joystickPilot, XboxController.Button.kLeftBumper.value);
+    final var intakeCommand = new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING))
+      .andThen(new WaitUntilCommand(Intake.getInstance()::isExhaustStalled))
+      .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
+    m_intakingButton.onTrue(intakeCommand);
+    m_intakingButton.onFalse(new InstantCommand(intakeCommand::cancel));
+
+    m_pilotShootButton = new Trigger(() -> m_joystickPilot.getLeftTriggerAxis() > 0.7);
+    m_pilotShootButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.OUTTAKING)));
+    m_pilotShootButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
     
     m_teleopSwerveCommand = new TeleopSwerve(
             Swerve.getInstance(),
@@ -148,7 +155,8 @@ public final class Robot extends TimedRobot {
             () -> -m_joystickPilot.getLeftX(),
             () -> -m_joystickPilot.getRightX(),
             m_joystickPilot::getBButton,
-            Pivot.getInstance()::isInhibitingMobility
+            Pivot.getInstance()::isInhibitingMobility,
+            () -> false
     );
 
     m_autonChooser = new SendableChooser<>();
@@ -179,7 +187,7 @@ public final class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    // Intake.getInstance().log();
+    Intake.getInstance().log();
 //    Pivot.getInstance().log();
 //    Elevator.getInstance().log();
     //Wrist.getInstance().log();
@@ -225,12 +233,13 @@ public final class Robot extends TimedRobot {
 
     m_teleopSwerveCommand.schedule();
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
+    LimelightHelpers.setLEDMode_ForceOff("");
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    if (m_joystickPilot.getLeftBumperPressed()) {
+    if (m_joystickPilot.getStartButtonPressed()) {
       Swerve.getInstance().zeroGyro();
     }
 

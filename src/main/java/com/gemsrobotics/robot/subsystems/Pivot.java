@@ -12,11 +12,12 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.ProfiledPIDSubsystem;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import java.util.Objects;
 import static java.lang.Math.abs;
 
-public class Pivot extends ProfiledPIDSubsystem {
+public class Pivot implements Subsystem {
 	private static Pivot INSTANCE = null;
 
 	public static Pivot getInstance() {
@@ -49,18 +50,6 @@ public class Pivot extends ProfiledPIDSubsystem {
 	private Rotation2d m_reference;
 
 	private Pivot() {
-		super(
-				new ProfiledPIDController(
-						kP,
-						0.0,
-						kD,
-						new TrapezoidProfile.Constraints(
-								1.2,
-								1.2
-						)
-				)
-		);
-
 		m_motor = MotorControllerFactory.createDefaultTalonFX(MOTOR_ID, MOTOR_BUS);
 		m_motor.setInvertedOutput(false);
 		m_motor.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
@@ -84,7 +73,7 @@ public class Pivot extends ProfiledPIDSubsystem {
 		STOWED(Rotation2d.fromDegrees(54)),
 		RETURNED(Rotation2d.fromDegrees(62)),
 		SHELF_PICKUP(Rotation2d.fromDegrees(54)),
-		SCORING(Rotation2d.fromDegrees(42));
+		SCORING(Rotation2d.fromDegrees(44));
 
 		public final Rotation2d rotation;
 
@@ -132,19 +121,8 @@ public class Pivot extends ProfiledPIDSubsystem {
 
 	@Override
 	public void periodic() {
-//		super.periodic();
 		final var ff = m_feedforward.calculate(getAngle().getRadians(), 0.0);
 		final var feedback = m_controllerPivot.calculate(getAngle().getRadians(), m_reference.getRadians());
 		m_motor.setVoltage(MathUtils.coerce(-9, feedback, 9), ff);
-	}
-
-	@Override
-	protected void useOutput(double output, TrapezoidProfile.State setpoint) {
-		m_motor.setVoltage(output, m_feedforward.calculate(setpoint.position, setpoint.velocity));
-	}
-
-	@Override
-	protected double getMeasurement() {
-		return getAngle().getRadians();
 	}
 }

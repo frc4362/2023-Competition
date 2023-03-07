@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.gemsrobotics.robot.subsystems.Intake.State;
+import com.gemsrobotics.robot.subsystems.Pivot.Position;
 
 public final class Superstructure implements Subsystem {
 	private static Superstructure INSTANCE;
@@ -141,6 +142,9 @@ public final class Superstructure implements Subsystem {
 			// intaking states
 			case INTAKING:
 				newState = handleIntaking();
+				break;
+			case OUTTAKING:
+				newState = handleOuttaking();
 				break;
 
 			default:
@@ -289,7 +293,7 @@ public final class Superstructure implements Subsystem {
 
 	private SystemState handleReturnToClearPivot() {
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
-		m_pivot.setReference(Pivot.Position.RETURNED);
+		m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotSafety).orElse(Pivot.Position.RETURNED));
 		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
 		m_wrist.setReferencePosition(Wrist.Position.STOWED);
 
@@ -301,7 +305,15 @@ public final class Superstructure implements Subsystem {
 	}
 
 	private SystemState handleIntaking() {
+		m_pivot.setReference(Position.RETURNED);
 		m_intake.setState(State.INTAKING);
+
+		return applyWantedState();
+	}
+
+	private SystemState handleOuttaking() {
+		m_pivot.setReference(Position.STOWED);
+		m_intake.setState(State.OUTTAKING);
 
 		return applyWantedState();
 	}

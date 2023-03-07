@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
@@ -29,7 +30,7 @@ import java.util.Objects;
 
 import static java.lang.Math.abs;
 
-public final class Swerve extends SubsystemBase {
+public final class Swerve implements Subsystem {
     private static Swerve INSTANCE;
 
     public static Swerve getInstance() {

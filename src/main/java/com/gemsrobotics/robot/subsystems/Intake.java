@@ -6,6 +6,7 @@ import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.gemsrobotics.lib.drivers.MotorController;
 import com.gemsrobotics.lib.drivers.MotorControllerFactory;
+import com.gemsrobotics.lib.drivers.MotorController.NeutralBehaviour;
 import com.gemsrobotics.robot.Constants;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -31,12 +32,13 @@ public class Intake implements Subsystem {
 	private static final String DRIVE_MOTOR_BUS = Constants.CANBusses.MAIN;
 
 	private static final double kP = 0.017 * 1.5;
-	private static final double kG = -0.6 / 12.0; // convert to duty cycle
+	private static final double kG = -0.9 / 12.0; // convert to duty cycle
 
-	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(2.0);
+	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(3.5);
 
 	private final TalonFX m_motorPosition;
 	private final TalonFX m_motorDrive;
+	private final TalonFX m_motorExhaust;
 
 	public enum Mode {
 		POSITION,
@@ -44,20 +46,23 @@ public class Intake implements Subsystem {
 	}
 
 	public enum State {
-		RETRACTED(0, 0.0),
-		BALANCED(9_800, 0.0),
-		MIDDLE(17_000, 0.0), // 25 000
-		EXTENDED(38_000, 0.0),
-		INTAKING(38_000, 0.25);
+		RETRACTED(0, 0.0, 0),
+		BALANCED(9_800, 0.0, 0),
+		MIDDLE(14_000, 0.0, 0), // 25 000
+		EXTENDED(38_000, 0.0, 0),
+		INTAKING(38_000, 0.4, 0.05),
+		OUTTAKING(0, -1, 1.0);
 
 		public static final double TICKS_PER_DEGREE = (EXTENDED.ticks - 12_000) / 90.0;
 
 		public final int ticks;
 		public final double drive;
+		public final double exhaust;
 
-		State(final int t, final double d) {
+		State(final int t, final double d, final double e) {
 			ticks = t;
 			drive = d;
+			exhaust = e;
 		}
 	}
 
@@ -76,6 +81,9 @@ public class Intake implements Subsystem {
 		m_motorPosition.configAllowableClosedloopError(0, State.TICKS_PER_DEGREE * 1.5);
 		m_motorPosition.configNeutralDeadband(0.02);
 
+		m_motorPosition.configNominalOutputReverse(-0.04);
+		m_motorPosition.configNominalOutputForward(0.04);
+
 		m_motorPosition.configForwardSoftLimitThreshold(State.EXTENDED.ticks);
 		m_motorPosition.configReverseSoftLimitThreshold(State.RETRACTED.ticks);
 		m_motorPosition.overrideSoftLimitsEnable(true);
@@ -93,8 +101,18 @@ public class Intake implements Subsystem {
 				100,
 				100));
 
+		final var exhaust = MotorControllerFactory.createDefaultTalonFX(16, "rio");
+		exhaust.setInvertedOutput(false);
+		exhaust.setNeutralBehaviour(NeutralBehaviour.BRAKE);
+
+		m_motorExhaust = exhaust.getInternalController();
+
 		m_mode = Mode.DISABLED;
 		m_state = State.RETRACTED;
+	}
+
+	public boolean isExhaustStalled() {
+		return m_motorExhaust.getStatorCurrent() > 20;
 	}
 
 	public void setDisabled() {
@@ -121,13 +139,15 @@ public class Intake implements Subsystem {
 	}
 
 	public boolean atReference() {
-		return atReference(TOLERANCE);
+		return Math.abs(m_motorPosition.getClosedLoopError()) < State.TICKS_PER_DEGREE * 5;
+		// return atReference(TOLERANCE);
 	}
 
 	public void log() {
 		SmartDashboard.putNumber("Intake Amps Drawn", m_motorDrive.getStatorCurrent());
 		SmartDashboard.putNumber("Intake Pos", m_motorPosition.getSelectedSensorPosition());
 		SmartDashboard.putNumber("Intake Error", getError());
+		SmartDashboard.putNumber("Exhaust Current", m_motorExhaust.getStatorCurrent());
 	}
 
 	@Override
@@ -138,11 +158,13 @@ public class Intake implements Subsystem {
 						ControlMode.Position, m_state.ticks,
 						DemandType.ArbitraryFeedForward, kG * getApproximateAngle().getCos());
 				m_motorDrive.set(ControlMode.PercentOutput, m_state.drive);
+				m_motorExhaust.set(ControlMode.PercentOutput, m_state.exhaust);
 				break;
 			case DISABLED:
 			default:
 				m_motorPosition.set(ControlMode.PercentOutput, 0.0);
 				m_motorDrive.set(ControlMode.PercentOutput, 0.0);
+				m_motorExhaust.set(ControlMode.PercentOutput, 0.0);
 				break;
 		}
 	}
