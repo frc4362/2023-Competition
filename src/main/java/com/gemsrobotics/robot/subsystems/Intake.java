@@ -50,7 +50,7 @@ public class Intake implements Subsystem {
 		BALANCED(9_800, 0.0, 0),
 		MIDDLE(14_000, 0.0, 0), // 25 000
 		EXTENDED(38_000, 0.0, 0),
-		INTAKING(38_000, 0.4, 0.05),
+		INTAKING(38_000, 0.4, 0.4), //e 0.05
 		OUTTAKING(0, -1, 1.0);
 
 		public static final double TICKS_PER_DEGREE = (EXTENDED.ticks - 12_000) / 90.0;
@@ -112,7 +112,7 @@ public class Intake implements Subsystem {
 	}
 
 	public boolean isExhaustStalled() {
-		return m_motorExhaust.getStatorCurrent() > 20;
+		return m_motorExhaust.getStatorCurrent() > 60; //20
 	}
 
 	public void setDisabled() {
