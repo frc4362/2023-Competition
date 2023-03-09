@@ -1,5 +1,7 @@
 package com.gemsrobotics.robot.subsystems;
 
+import com.gemsrobotics.robot.subsystems.Elevator.Position;
+
 public final class SuperstructurePose {
     // TODO
 //    public static final SuperstructureState STARTING = new SuperstructureState(Rotation2d.fromDegrees(54), -54.0, 0.025);
@@ -93,11 +95,12 @@ public final class SuperstructurePose {
     }
 
     public Elevator.Position getElevatorSafety() {
-        if (m_type == Type.PICKUP) {
-            return Elevator.Position.SHELF_PICKUP;
-        } else {
-            return Elevator.Position.FRONT_SAFETY;
-        }
+        return Position.FRONT_SAFETY;
+        // if (m_type == Type.PICKUP) {
+        //     return Elevator.Position.SHELF_PICKUP;
+        // } else {
+        //     return Elevator.Position.FRONT_SAFETY;
+        // }
     }
 
     public Pivot.Position getPivotSafety() {

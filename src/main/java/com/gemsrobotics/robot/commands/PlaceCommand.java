@@ -9,8 +9,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 
-public final class SuperstructurePoseCommand extends SequentialCommandGroup {
-    public SuperstructurePoseCommand(final SuperstructurePose pose) {
+public final class PlaceCommand extends SequentialCommandGroup {
+    public PlaceCommand(final SuperstructurePose pose) {
         addCommands(
             new InstantCommand(() -> Superstructure.getInstance().setGoalPose(pose)),
             new WaitUntilCommand(() -> Superstructure.getInstance().getSystemState() == SystemState.ATTAINED_POSE),

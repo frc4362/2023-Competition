@@ -7,7 +7,7 @@ package com.gemsrobotics.robot;
 import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.autos.BalanceAuto;
 import com.gemsrobotics.robot.autos.SideAuto;
-import com.gemsrobotics.robot.commands.SuperstructurePoseCommand;
+import com.gemsrobotics.robot.commands.PlaceCommand;
 import com.gemsrobotics.robot.commands.TeleopSwerve;
 import com.gemsrobotics.robot.subsystems.*;
 import com.gemsrobotics.robot.subsystems.Claw.Goal;
@@ -75,7 +75,7 @@ public final class Robot extends TimedRobot {
     CommandScheduler.getInstance().registerSubsystem(Swerve.getInstance());
     CommandScheduler.getInstance().registerSubsystem(Superstructure.getInstance());
 
-    LEDController.getInstance().ifPresent(CommandScheduler.getInstance()::registerSubsystem);
+    // LEDController.getInstance().ifPresent(CommandScheduler.getInstance()::registerSubsystem);
 
     m_superstructure = Superstructure.getInstance();
 
@@ -124,15 +124,17 @@ public final class Robot extends TimedRobot {
     m_wantNoneButton.onTrue(Commands.runOnce(
            () -> LimelightHelpers.setLEDMode_ForceOff("")));
 
+    // m_hatButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
+
     m_clawOpenButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kRightBumper.value);
-    m_clawOpenButton.debounce(2.5, Debouncer.DebounceType.kRising);
+    m_clawOpenButton.debounce(1., Debouncer.DebounceType.kRising);
     m_clawOpenButton.onTrue(Claw.getInstance().requestDropPiece());
 
     // pilot controls
     m_joystickPilot = new XboxController(Constants.PILOT_PORT);
 
     m_clawCloseButton = new JoystickButton(m_joystickPilot, XboxController.Button.kRightBumper.value);
-    m_clawCloseButton.debounce(2.5, Debouncer.DebounceType.kRising);
+    m_clawCloseButton.debounce(1., Debouncer.DebounceType.kRising);
     m_clawCloseButton.onTrue(Claw.getInstance().requestGrab());
 
     m_resetFieldOrientationButton = new JoystickButton(m_joystickPilot, XboxController.Button.kStart.value);
@@ -187,11 +189,11 @@ public final class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    Intake.getInstance().log();
-//    Pivot.getInstance().log();
-//    Elevator.getInstance().log();
-    //Wrist.getInstance().log();
-    // Claw.getInstance().log();
+    // Intake.getInstance().log();
+    Pivot.getInstance().log();
+    Elevator.getInstance().log();
+    Wrist.getInstance().log();
+    Claw.getInstance().log();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -242,6 +244,8 @@ public final class Robot extends TimedRobot {
     if (m_joystickPilot.getStartButtonPressed()) {
       Swerve.getInstance().zeroGyro();
     }
+
+    Superstructure.getInstance().setDoHat(m_joystickCopilot.getLeftBumper());
 
 //    Claw.getInstance().setIntakeState(m_joystickPilot.getYButton());
 

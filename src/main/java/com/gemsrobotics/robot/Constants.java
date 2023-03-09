@@ -25,7 +25,7 @@ public final class Constants {
 
     public static final double stickDeadband = 0.15;
     public static final double VISION_OUTLIER_DISTANCE = 1.0; // meters
-	public static final double DEBOUNCE_TIME_SECONDS = 0.2;
+	public static final double DEBOUNCE_TIME_SECONDS = 0.1;
     public static final int PILOT_PORT = 0;
     public static final int COPILOT_PORT = 1;
 

@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import com.gemsrobotics.robot.subsystems.Intake.State;
 import com.gemsrobotics.robot.subsystems.Pivot.Position;
+import com.gemsrobotics.robot.subsystems.SuperstructurePose.Type;
 
 public final class Superstructure implements Subsystem {
 	private static Superstructure INSTANCE;
@@ -54,6 +55,7 @@ public final class Superstructure implements Subsystem {
 	private WantedState m_stateWanted;
 	private SystemState m_state;
 	private Optional<SuperstructurePose> m_poseGoal;
+	private boolean m_wantsHat;
 
 	private final Intake m_intake;
 	private final Elevator m_elevator;
@@ -76,6 +78,7 @@ public final class Superstructure implements Subsystem {
 		m_state = SystemState.STOWED;
 		m_stateWanted = WantedState.STOWED;
 
+		m_wantsHat = false;
 		m_poseGoal = Optional.empty();
 	}
 
@@ -102,6 +105,10 @@ public final class Superstructure implements Subsystem {
 	public void setGoalPoseCleared() {
 		setWantedState(WantedState.STOWED);
 		m_poseGoal = Optional.empty();
+	}
+
+	public void setDoHat(final boolean h) {
+		m_wantsHat = h;
 	}
 
 	@Override
@@ -238,7 +245,7 @@ public final class Superstructure implements Subsystem {
 	}
 
 	private SystemState handleReadyForFrontPose() {
-		m_elevator.setReference(m_poseGoal.map(SuperstructurePose::getElevator).orElse(Elevator.Position.FRONT_SAFETY));
+		m_elevator.setReference(m_poseGoal.map(SuperstructurePose::getElevator).orElse(Elevator.Position.SAFETY_BOTTOM));
 		m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotGoal).orElse(Pivot.Position.STOWED));
 		m_wrist.setReferencePosition(m_poseGoal.map(SuperstructurePose::getWrist).orElse(Wrist.Position.CLEAR));
 		m_claw.setGoal(m_poseGoal.map(SuperstructurePose::getClaw).orElse(Claw.Goal.CLOSED));
@@ -256,6 +263,12 @@ public final class Superstructure implements Subsystem {
 
 	private SystemState handleAttainedPose() {
 		// m_intake.setState(State.RETRACTED);
+
+		if (m_poseGoal.map(SuperstructurePose::getType).map(pose -> pose == Type.PLACEMENT).orElse(false)) {
+			m_wrist.setReferencePosition(m_wantsHat ? Wrist.Position.HAT : m_poseGoal.get().getWrist());
+		} else {
+			m_wrist.setReferencePosition(m_poseGoal.map(SuperstructurePose::getWrist).orElse(Wrist.Position.CLEAR));
+		}
 
 		if (m_stateWanted == WantedState.ATTAIN_POSE) {
 			final var poseType = m_poseGoal.map(SuperstructurePose::getType);
@@ -279,7 +292,7 @@ public final class Superstructure implements Subsystem {
 	}
 
 	private SystemState handleReturnToClearElevator() {
-		m_elevator.setReference(m_poseGoal.map(SuperstructurePose::getElevatorSafety).orElse(Elevator.Position.FRONT_SAFETY));
+		m_elevator.setReference(m_poseGoal.map(SuperstructurePose::getElevatorSafety).orElse(Elevator.Position.SAFETY_BOTTOM));
 		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
 //		m_pivot.setReference(Pivot.Position.STOWED);
 		m_wrist.setReferencePosition(Wrist.Position.CLEAR);

@@ -73,7 +73,7 @@ public class Pivot implements Subsystem {
 		STOWED(Rotation2d.fromDegrees(54)),
 		RETURNED(Rotation2d.fromDegrees(62)),
 		SHELF_PICKUP(Rotation2d.fromDegrees(54)),
-		SCORING(Rotation2d.fromDegrees(44));
+		SCORING(Rotation2d.fromDegrees(38));
 
 		public final Rotation2d rotation;
 
@@ -116,7 +116,7 @@ public class Pivot implements Subsystem {
 		// SmartDashboard.putNumber("Pivot Control Effort", m_motor.getVoltageOutput());
 		// SmartDashboard.putNumber("Pivot Velocity", m_motor.getVelocityAngularRadiansPerSecond());
 		// SmartDashboard.putNumber("Pivot Error", getErrorDegrees());
-		// SmartDashboard.putNumber("Pivot AtRef", atReference() ? 1.0 : 0.0);
+		SmartDashboard.putNumber("Pivot AtRef", atReference() ? 1.0 : 0.0);
 	}
 
 	@Override

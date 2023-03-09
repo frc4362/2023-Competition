@@ -31,10 +31,10 @@ public class Intake implements Subsystem {
 	private static final int DRIVE_MOTOR_ID = 20;
 	private static final String DRIVE_MOTOR_BUS = Constants.CANBusses.MAIN;
 
-	private static final double kP = 0.017 * 1.5;
+	private static final double kP = 0.018;
 	private static final double kG = -0.9 / 12.0; // convert to duty cycle
 
-	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(3.5);
+	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(5.0);
 
 	private final TalonFX m_motorPosition;
 	private final TalonFX m_motorDrive;
@@ -48,7 +48,7 @@ public class Intake implements Subsystem {
 	public enum State {
 		RETRACTED(0, 0.0, 0),
 		BALANCED(9_800, 0.0, 0),
-		MIDDLE(14_000, 0.0, 0), // 25 000
+		MIDDLE(24_000, 0.0, 0), // 25 000
 		EXTENDED(38_000, 0.0, 0),
 		INTAKING(38_000, 0.4, 0.4), //e 0.05
 		OUTTAKING(0, -1, 1.0);
@@ -79,10 +79,10 @@ public class Intake implements Subsystem {
 		m_motorPosition.config_kI(0, 0.0);
 		m_motorPosition.config_kD(0, 0.0);
 		m_motorPosition.configAllowableClosedloopError(0, State.TICKS_PER_DEGREE * 1.5);
-		m_motorPosition.configNeutralDeadband(0.02);
+		m_motorPosition.configNeutralDeadband(0.04);
 
-		m_motorPosition.configNominalOutputReverse(-0.04);
-		m_motorPosition.configNominalOutputForward(0.04);
+		m_motorPosition.configNominalOutputReverse(-0.03);
+		m_motorPosition.configNominalOutputForward(0.03);
 
 		m_motorPosition.configForwardSoftLimitThreshold(State.EXTENDED.ticks);
 		m_motorPosition.configReverseSoftLimitThreshold(State.RETRACTED.ticks);
@@ -139,7 +139,7 @@ public class Intake implements Subsystem {
 	}
 
 	public boolean atReference() {
-		return Math.abs(m_motorPosition.getClosedLoopError()) < State.TICKS_PER_DEGREE * 5;
+		return Math.abs(m_motorPosition.getClosedLoopError()) < State.TICKS_PER_DEGREE * TOLERANCE.getDegrees();
 		// return atReference(TOLERANCE);
 	}
 

@@ -36,7 +36,7 @@ public final class Elevator implements Subsystem {
 	private static final double
 			FORWARD_SOFT_LIMIT = 125_000,
 			REVERSE_SOFT_LIMIT = 0;
-	private static final double TOLERANCE_METERS = 0.05;
+	private static final double TOLERANCE_METERS = 0.07;
 	public static final double GEARING_MULTIPLIER = 1.0 / 9.0;
 
 	public static final double
@@ -85,9 +85,9 @@ public final class Elevator implements Subsystem {
 	public enum Position {
 		TRUE_BOTTOM(0.0),
 		SAFETY_BOTTOM(0.005),
-		FRONT_SAFETY(.48),
-		SHELF_PICKUP(.39),
-		SCORING_MID(0.88),//0.87
+		FRONT_SAFETY(.15),
+		SHELF_PICKUP(.645),
+		SCORING_MID(0.89),//0.87
 		SCORING_HIGH(1.39),//1.38
 		SAFETY_TOP(1.39),
 		TRUE_TOP(1.39); // meters
@@ -144,9 +144,11 @@ public final class Elevator implements Subsystem {
 
 	public void log() {
 		SmartDashboard.putNumber("Elevator Extension", getHeightMeters());
-		SmartDashboard.putNumber("Elevator Angle", m_externalAngle.getDegrees());
-		SmartDashboard.putNumber("Elevator Control Effort", m_motor.getVoltageOutput());
-		SmartDashboard.putNumber("Elevator Raw Measurement", m_motor.getInternalController().getSelectedSensorPosition());
+		SmartDashboard.putNumber("Elevator Reference", m_referenceMeters);
+		// SmartDashboard.putNumber("Elevator Angle", m_externalAngle.getDegrees());
+		// SmartDashboard.putNumber("Elevator Control Effort", m_motor.getVoltageOutput());
+		// SmartDashboard.putNumber("Elevator Raw Measurement", m_motor.getInternalController().getSelectedSensorPosition());
+		SmartDashboard.putNumber("Elevator AtRef", atReference() ? 1.0 : 0.0);
 	}
 
 	@Override

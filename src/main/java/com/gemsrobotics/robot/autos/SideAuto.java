@@ -3,7 +3,7 @@ package com.gemsrobotics.robot.autos;
 import java.util.List;
 
 import com.gemsrobotics.robot.Constants;
-import com.gemsrobotics.robot.commands.SuperstructurePoseCommand;
+import com.gemsrobotics.robot.commands.PlaceCommand;
 import com.gemsrobotics.robot.subsystems.Claw;
 import com.gemsrobotics.robot.subsystems.SuperstructurePose;
 import com.gemsrobotics.robot.subsystems.Swerve;
@@ -26,7 +26,7 @@ public final class SideAuto extends SequentialCommandGroup {
 
         addCommands(
             Claw.getInstance().requestGrab(),
-            new SuperstructurePoseCommand(SuperstructurePose.HIGH_PLACE),
+            new PlaceCommand(SuperstructurePose.HIGH_PLACE),
             Swerve.getInstance().getAbsoluteTrackingCommand(trajectory),
             Swerve.getInstance().getStopCommand()
         );

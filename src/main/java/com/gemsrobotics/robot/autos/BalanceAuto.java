@@ -1,6 +1,6 @@
 package com.gemsrobotics.robot.autos;
 
-import com.gemsrobotics.robot.commands.SuperstructurePoseCommand;
+import com.gemsrobotics.robot.commands.PlaceCommand;
 import com.gemsrobotics.robot.commands.DriveOntoPlatform;
 import com.gemsrobotics.robot.subsystems.Claw;
 import com.gemsrobotics.robot.subsystems.SuperstructurePose;
@@ -14,7 +14,7 @@ public class BalanceAuto extends SequentialCommandGroup {
 	public BalanceAuto(final Swerve swerve) {
 		addCommands(
 				Claw.getInstance().requestGrab(),
-				new SuperstructurePoseCommand(SuperstructurePose.HIGH_PLACE),
+				new PlaceCommand(SuperstructurePose.HIGH_PLACE),
 				new DriveOntoPlatform(swerve, new Translation2d(.35, 0.0), .35),
 				new InstantCommand(() -> swerve.setDrivePercent(new Translation2d(.32, 0.0), 0.0, true, false)),
 				new WaitCommand(.8),
