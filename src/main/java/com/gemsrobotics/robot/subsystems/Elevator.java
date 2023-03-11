@@ -39,6 +39,7 @@ public final class Elevator implements Subsystem {
 	private static final double TOLERANCE_METERS = 0.07;
 	public static final double GEARING_MULTIPLIER = 1.0 / 9.0;
 
+	public static final double OUTPUT_VOLTS = 10;
 	public static final double
 		kS = 0.15,
 		kG = 0.66;
@@ -155,7 +156,7 @@ public final class Elevator implements Subsystem {
 	public void periodic() {
 		final var error = abs(getHeightMeters() - m_referenceMeters);
 		final var feedback = m_controller.calculate(getHeightMeters(), m_referenceMeters);
-		final var limitedFeedback = MathUtils.coerce(-7, feedback, 7);
+		final var limitedFeedback = MathUtils.coerce(-OUTPUT_VOLTS, feedback, OUTPUT_VOLTS);
 		m_motor.setVoltage(limitedFeedback, kG * m_externalAngle.getSin() + kS * signum(limitedFeedback));
 	}
 }

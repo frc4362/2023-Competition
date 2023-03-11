@@ -34,7 +34,7 @@ public final class Wrist implements Subsystem {
 
 	private static final double GEARING_MULTIPLIER = 1 / 38.94;
 	private static final double TOLERANCE = 1.25;
-	public static final Rotation2d STARTING_ANGLE_FROM_ELEVATOR = Rotation2d.fromDegrees(230);//-54
+	public static final double STARTING_ROTATION_FROM_ELEVATOR = 0.638;// Rotation2d.fromDegrees(230);//-54
 	public static final int MAX_FEEDBACK_VOLTS = 4;
 
 	private final MotorController<TalonFX> m_motor;
@@ -55,35 +55,35 @@ public final class Wrist implements Subsystem {
 
 		// m_motor.getInternalController().configNominalOutputForward(GEARING_MULTIPLIER);
 
-		m_controller = new PIDController(18.0, 0.0, 0.0);
+		m_controller = new PIDController(24.0, 0.0, 0.0);
 		m_controller.setTolerance(0.0);
 
 		m_feedforward = new ArmFeedforward(kS, kG, 0.0, 0.0);
 
 		m_externalAngle = Rotation2d.fromDegrees(0.0);
-		m_referenceRotations = 0.638;//STARTING_ANGLE_FROM_ELEVATOR.getRotations();
+		m_referenceRotations = STARTING_ROTATION_FROM_ELEVATOR;//STARTING_ANGLE_FROM_ELEVATOR.getRotations();
 	}
 
 	// This is in angle relative to the elevator
 	// Negative numbers are forwards from the elevator
 	public enum Position {
-		STARTING(Rotation2d.fromDegrees(230)), //-54
-		SCORING_MID(Rotation2d.fromDegrees(-16)),
-		SCORING_HIGH(Rotation2d.fromDegrees(-16)),
-		HAT(Rotation2d.fromDegrees(-41)),
-		SHELF_PICKUP(Rotation2d.fromDegrees(-50)),
-		CLEAR(Rotation2d.fromDegrees(0)),
-		STOWED(Rotation2d.fromDegrees(210));
+		STARTING(230.0 / 360.0), //-54
+		SCORING_MID(-16.0 / 360.0),
+		SCORING_HIGH(-16 / 360.0),
+		HAT(-41 / 360.0),
+		SHELF_PICKUP(-49 / 360.0),
+		CLEAR(0.0 / 360.0),
+		STOWED(210.0 / 360.0);
 
-		public final Rotation2d rotation;
+		public final double rotation;
 
-		Position(final Rotation2d rot) {
+		Position(final double rot) {
 			rotation = rot;
 		}
 	}
 
 	public void setReferencePosition(final Position referencePosition) {
-		setReferenceRotationsToElevator(referencePosition.rotation.getRotations());
+		setReferenceRotationsToElevator(referencePosition.rotation);
 	}
 
 	public void setReferenceRotationsToElevator(final double referenceRotations) {
@@ -92,11 +92,11 @@ public final class Wrist implements Subsystem {
 
 	// we need these two methods so that we can cross the 180 degree boundary; they do different things
 	public double getRotationsToElevator() {
-		return m_motor.getPositionRotations() + STARTING_ANGLE_FROM_ELEVATOR.getRotations();
+		return m_motor.getPositionRotations() + STARTING_ROTATION_FROM_ELEVATOR;
 	}
 
 	public Rotation2d getAngleToElevator() {
-		return Rotation2d.fromRotations(m_motor.getPositionRotations()).rotateBy(STARTING_ANGLE_FROM_ELEVATOR);
+		return Rotation2d.fromRotations(m_motor.getPositionRotations() + STARTING_ROTATION_FROM_ELEVATOR);
 	}
 
 	public Rotation2d getAngleToGround() {
@@ -125,6 +125,7 @@ public final class Wrist implements Subsystem {
 		// SmartDashboard.putNumber("Wrist External Angle", m_externalAngle.getDegrees());
 	
 		SmartDashboard.putNumber("Wrist Position Degrees", getRotationsToElevator() * 360);
+		SmartDashboard.putNumber("Wrist Motor Rotations", m_motor.getPositionRotations());
 		SmartDashboard.putNumber("Wrist Reference Degrees", m_referenceRotations * 360);
 		SmartDashboard.putNumber("Wrist AtRef", atReference() ? 1.0 : 0.0);
 	}

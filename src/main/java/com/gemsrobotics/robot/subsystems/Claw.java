@@ -63,6 +63,7 @@ public final class Claw implements Subsystem {
 		m_motorDrive = MotorControllerFactory.createDefaultTalonFX(CLAW_DRIVE_MOTOR_ID, CLAW_DRIVE_MOTOR_BUS);
 		m_motorDrive.setInvertedOutput(true);
 		m_motorDrive.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
+		m_motorDrive.setGearingParameters(GEARING_MULTIPLIER, 1.0);
 
 		m_motorGrip = MotorControllerFactory.createDefaultTalonFX(CLAW_GRIP_MOTOR_ID, CLAW_GRIP_MOTOR_BUS);
 		m_motorGrip.setInvertedOutput(true);
@@ -174,12 +175,12 @@ public final class Claw implements Subsystem {
 					setGoal(Goal.GRIPPING);
 					setIntakeState(IntakeState.INTAKING);
 				})
-					   .andThen(new WaitUntilCommand(() -> getObservedPiece().isPresent() && getPieceConfidence())
-										.raceWith(new WaitCommand(2.5).andThen(() -> {
-											setGoal(Goal.OPEN);
-											LEDController.getInstance().ifPresent(LEDController::requestPulseRed);
-										})))
-					   .finallyDo(interrupted -> setIntakeState(IntakeState.NEUTRAL));
+			    .andThen(new WaitUntilCommand(() -> getObservedPiece().isPresent() && getPieceConfidence())
+								.raceWith(new WaitCommand(2.5).andThen(() -> {
+									setGoal(Goal.OPEN);
+									LEDController.getInstance().ifPresent(LEDController::requestPulseRed);
+								})))
+			    .finallyDo(interrupted -> setIntakeState(IntakeState.NEUTRAL));
 	}
 
 	public void log() {
@@ -189,6 +190,7 @@ public final class Claw implements Subsystem {
 		SmartDashboard.putString("Claw Observed Piece", getObservedPiece().map(ObservedPiece::toString).orElse("NONE"));
 //		SmartDashboard.putBoolean("Claw Force Closed", m_forceGrip);
 //		SmartDashboard.putString("Claw State", m_goal.toString());
+		SmartDashboard.putNumber("Drive Position", m_motorDrive.getPositionRotations());
 	}
 
 	@Override
@@ -212,6 +214,7 @@ public final class Claw implements Subsystem {
 				break;
 
 			case CLOSED:
+//				if (m_forceGrip || m_motorGrip.getPositionRotations() > CONE_THRESHOLD_ROTATIONS) {
 				if (m_forceGrip || m_motorGrip.getPositionRotations() > CONE_THRESHOLD_ROTATIONS) {
 					m_motorGrip.setVoltage(-1.0);
 				} else {
@@ -220,9 +223,10 @@ public final class Claw implements Subsystem {
 				break;
 
 			case OPEN:
-				if (m_forceGrip) {
-					m_motorGrip.setVoltage(-1.0);
-				} else if (m_motorGrip.getPositionRotations() < GRIP_OPEN_POSITION) {
+//				if (m_forceGrip) {
+//					m_motorGrip.setVoltage(-1.0);
+//				} else
+				if (m_motorGrip.getPositionRotations() < GRIP_OPEN_POSITION) {
 					m_motorGrip.setVoltage(2.0);
 				} else {
 					m_motorGrip.setVoltage(0.0);

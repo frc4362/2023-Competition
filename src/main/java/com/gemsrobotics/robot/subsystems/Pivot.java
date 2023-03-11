@@ -38,7 +38,7 @@ public class Pivot implements Subsystem {
 			REVERSE_SOFT_LIMIT = -365_000;
 
 	private static final double
-			kP = 126/2,//126,
+			kP = 126 / 2,//126,
 			kD = 2;
 
 	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(2.0);
@@ -73,7 +73,7 @@ public class Pivot implements Subsystem {
 		STOWED(Rotation2d.fromDegrees(54)),
 		RETURNED(Rotation2d.fromDegrees(62)),
 		SHELF_PICKUP(Rotation2d.fromDegrees(54)),
-		SCORING(Rotation2d.fromDegrees(38));
+		SCORING(Rotation2d.fromDegrees(38.5));
 
 		public final Rotation2d rotation;
 
