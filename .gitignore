@@ -4,6 +4,8 @@
 .idea/
 build/
 .gradle/
+bin/
+gradle/
 
 ### C++ ###
 # Prerequisites
