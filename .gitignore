@@ -2,10 +2,10 @@
 # If you remove items from this file, intellisense might break.
 
 .idea/
-build/
-.gradle/
-bin/
-gradle/
+#build/
+#.gradle/
+#bin/
+#gradle/
 
 ### C++ ###
 # Prerequisites
