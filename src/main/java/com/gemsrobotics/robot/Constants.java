@@ -2,6 +2,7 @@ package com.gemsrobotics.robot;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
+import com.pathplanner.lib.PathConstraints;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -116,7 +117,7 @@ public final class Constants {
         public static final NeutralMode driveNeutralMode = NeutralMode.Brake;
 
         /* Module Specific Constants */
-        /* Front Left Module - Module 2 */ // Used to be 0
+        /* Back Left Module - Module 2 */ // Used to be 0
         public static final class Mod2 { //: This must be tuned to specific robot
             public static final int driveMotorID = 1;
             public static final int angleMotorID = 5;
@@ -126,7 +127,7 @@ public final class Constants {
                 new SwerveModuleConstants(driveMotorID, angleMotorID, canCoderID, angleOffset, CANBusses.AUX);
         }
 
-        /* Front Right Module - Module 3 */ //Used to be 1
+        /* Back Right Module - Module 3 */ //Used to be 1
         public static final class Mod3 { //: This must be tuned to specific robot
             public static final int driveMotorID = 3;
             public static final int angleMotorID = 7;
@@ -136,7 +137,7 @@ public final class Constants {
                 new SwerveModuleConstants(driveMotorID, angleMotorID, canCoderID, angleOffset, CANBusses.AUX);
         }
         
-        /* Back Left Module - Module 0 */ //Used to be 2
+        /* Front Left Module - Module 0 */ //Used to be 2
         public static final class Mod0 { //: This must be tuned to specific robot
             public static final int driveMotorID = 2;
             public static final int angleMotorID = 6;
@@ -146,7 +147,7 @@ public final class Constants {
                 new SwerveModuleConstants(driveMotorID, angleMotorID, canCoderID, angleOffset, CANBusses.AUX);
         }
 
-        /* Back Right Module - Module 1 */ // Used to be 3
+        /* Front Right Module - Module 1 */ // Used to be 3
         public static final class Mod1 { //: This must be tuned to specific robot
             public static final int driveMotorID = 4;
             public static final int angleMotorID = 8;
@@ -159,7 +160,7 @@ public final class Constants {
 
     public static final class AutoConstants { //: The below constants are used in the example auto, and must be tuned to specific robot
         public static final double kMaxSpeedMetersPerSecond = 4.95;
-        public static final double kMaxAccelerationMetersPerSecondSquared = 2.5;
+        public static final double kMaxAccelerationMetersPerSecondSquared = 4.0;
         public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
         public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
     
@@ -174,18 +175,10 @@ public final class Constants {
     }
 
     public static final class Generation {
-        private static final TrajectoryConfig configForward =
-                new TrajectoryConfig(
+        public static final PathConstraints constraints =
+                new PathConstraints(
                         Constants.AutoConstants.kMaxSpeedMetersPerSecond,
-                        Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-                        .setKinematics(Constants.Swerve.swerveKinematics);
-
-        private static final TrajectoryConfig configBackward =
-                new TrajectoryConfig(
-                        Constants.AutoConstants.kMaxSpeedMetersPerSecond,
-                        Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-                        .setReversed(true)
-                        .setKinematics(Constants.Swerve.swerveKinematics);
+                        Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared);
 
         public static final ProfiledPIDController thetaController = new ProfiledPIDController(
                 Constants.AutoConstants.kPThetaController,
@@ -193,46 +186,53 @@ public final class Constants {
                 0,
                 Constants.AutoConstants.kThetaControllerConstraints);
 
+        public static final PIDController pureThetaController = new PIDController(
+                AutoConstants.kPThetaController,
+                0,
+                0
+        );
+
         public static final double maxCentripetalAcceleration = 3.0;
 
         static {
-            configForward.addConstraint(new CentripetalAccelerationConstraint(maxCentripetalAcceleration));
-            configBackward.addConstraint(new CentripetalAccelerationConstraint(maxCentripetalAcceleration));
+//            configForward.addConstraint(new CentripetalAccelerationConstraint(maxCentripetalAcceleration));
+//            configBackward.addConstraint(new CentripetalAccelerationConstraint(maxCentripetalAcceleration));
             thetaController.enableContinuousInput(-Math.PI, Math.PI);
+            pureThetaController.enableContinuousInput(-Math.PI, Math.PI);
         }
 
-        public static Trajectory getForwardTrajectory(
-                final Pose2d starterPose,
-                final List<Translation2d> poses,
-                final Pose2d endPose
-        ) {
-            return TrajectoryGenerator.generateTrajectory(
-                    starterPose,
-                    poses,
-                    endPose,
-                    configForward
-            );
-        }
+//        public static Trajectory getForwardTrajectory(
+//                final Pose2d starterPose,
+//                final List<Translation2d> poses,
+//                final Pose2d endPose
+//        ) {
+//            return TrajectoryGenerator.generateTrajectory(
+//                    starterPose,
+//                    poses,
+//                    endPose,
+//                    configForward
+//            );
+//        }
 
-        public static Trajectory getForwardTrajectory(final Pose2d starterPose, final Pose2d endPose) {
-            return getForwardTrajectory(starterPose, List.of(), endPose);
-        }
-
-        public static Trajectory getBackwardTrajectory(
-                final Pose2d starterPose,
-                final List<Translation2d> poses,
-                final Pose2d endPose
-        ) {
-            return TrajectoryGenerator.generateTrajectory(
-                    starterPose,
-                    poses,
-                    endPose,
-                    configBackward
-            );
-        }
-
-        public static Trajectory getBackwardTrajectory(final Pose2d starterPose, final Pose2d endPose) {
-            return getBackwardTrajectory(starterPose, List.of(), endPose);
-        }
+//        public static Trajectory getForwardTrajectory(final Pose2d starterPose, final Pose2d endPose) {
+//            return getForwardTrajectory(starterPose, List.of(), endPose);
+//        }
+//
+//        public static Trajectory getBackwardTrajectory(
+//                final Pose2d starterPose,
+//                final List<Translation2d> poses,
+//                final Pose2d endPose
+//        ) {
+//            return TrajectoryGenerator.generateTrajectory(
+//                    starterPose,
+//                    poses,
+//                    endPose,
+//                    configBackward
+//            );
+//        }
+//
+//        public static Trajectory getBackwardTrajectory(final Pose2d starterPose, final Pose2d endPose) {
+//            return getBackwardTrajectory(starterPose, List.of(), endPose);
+//        }
     }
 }

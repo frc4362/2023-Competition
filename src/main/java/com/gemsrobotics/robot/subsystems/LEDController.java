@@ -1,7 +1,6 @@
 package com.gemsrobotics.robot.subsystems;
 
-import com.ctre.phoenix.led.CANdle;
-import com.ctre.phoenix.led.CANdleConfiguration;
+import com.ctre.phoenix.led.*;
 import com.gemsrobotics.robot.Constants;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -12,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class LEDController implements Subsystem {
-	private static final boolean IS_INSTALLED = false;
+	private static final boolean IS_INSTALLED = true;
 
 	private static LEDController INSTANCE;
 
@@ -28,6 +27,7 @@ public final class LEDController implements Subsystem {
 	private static final String CANDLE_BUS = Constants.CANBusses.MAIN;
 	private final Command m_pulseRedCommand;
 	private final CANdle m_candle;
+	private final Animation m_animation;
 
 	private State m_state;
 
@@ -39,7 +39,7 @@ public final class LEDController implements Subsystem {
 		configAll.disableWhenLOS = false;
 		configAll.stripType = CANdle.LEDStripType.GRB;
 		configAll.brightnessScalar = 1.0;
-		configAll.vBatOutputMode = CANdle.VBatOutputMode.Modulated;
+		configAll.vBatOutputMode = CANdle.VBatOutputMode.Off;
 		m_candle.configAllSettings(configAll, 100);
 
 		m_pulseRedCommand = runOnce(() -> setLEDs(Color.kRed))
@@ -53,6 +53,7 @@ public final class LEDController implements Subsystem {
 									.andThen(() -> setLEDs(Color.kRed))
 									.andThen(new WaitCommand(0.2));
 
+		m_animation = new RainbowAnimation(1, 1, 60);
 		m_state = State.OFF;
 	}
 
@@ -91,6 +92,6 @@ public final class LEDController implements Subsystem {
 
 	@Override
 	public void periodic() {
-		// m_candle.setLEDs(0, 0, 255);
+		 m_candle.setLEDs(0, 255, 0);
 	}
 }

@@ -5,12 +5,9 @@
 package com.gemsrobotics.robot;
 
 import com.gemsrobotics.lib.LimelightHelpers;
-import com.gemsrobotics.robot.autos.BalanceAuto;
-import com.gemsrobotics.robot.autos.SideAuto;
-import com.gemsrobotics.robot.commands.PlaceCommand;
+import com.gemsrobotics.robot.autos.*;
 import com.gemsrobotics.robot.commands.TeleopSwerve;
 import com.gemsrobotics.robot.subsystems.*;
-import com.gemsrobotics.robot.subsystems.Claw.Goal;
 import com.gemsrobotics.robot.subsystems.Superstructure.SystemState;
 import com.gemsrobotics.robot.subsystems.Superstructure.WantedState;
 
@@ -21,7 +18,6 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.button.Button;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -44,11 +40,11 @@ public final class Robot extends TimedRobot {
           m_clawCloseButton,
           m_resetFieldOrientationButton,
           m_intakingButton,
-          m_outtakingButton;
+          m_hybridButton;
   public POVButton
-          m_wantConeButton,
-          m_wantCubeButton,
-          m_wantNoneButton;
+          m_shootHighButton,
+          m_shootMidButton,
+          m_shootHybridButton;
 
   private SendableChooser<Command> m_autonChooser;
   private Command m_teleopSwerveCommand, m_autonomousCommand;
@@ -75,7 +71,7 @@ public final class Robot extends TimedRobot {
     CommandScheduler.getInstance().registerSubsystem(Swerve.getInstance());
     CommandScheduler.getInstance().registerSubsystem(Superstructure.getInstance());
 
-    // LEDController.getInstance().ifPresent(CommandScheduler.getInstance()::registerSubsystem);
+    LEDController.getInstance().ifPresent(CommandScheduler.getInstance()::registerSubsystem);
 
     m_superstructure = Superstructure.getInstance();
 
@@ -106,23 +102,25 @@ public final class Robot extends TimedRobot {
       }
     }, m_superstructure));
 
-    m_resetPoseButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kX.value);
+    m_resetPoseButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kStart.value);
     m_resetPoseButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
     m_resetPoseButton.onTrue(Commands.runOnce(m_superstructure::setGoalPoseCleared, m_superstructure));
     
-    m_outtakingButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
+    m_hybridButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kX.value);
+    m_hybridButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.HYBRID)));
+    m_hybridButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
 
-    m_wantConeButton = new POVButton(m_joystickCopilot, 0);
-//    m_wantConeButton.onTrue(Commands.runOnce(
-//            () -> LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.WANTS_CONE))));
+    m_shootHighButton = new POVButton(m_joystickCopilot, 0);
+    m_shootHighButton.onTrue(Commands.runOnce(
+            () -> Intake.getInstance().setOuttakeType(Intake.TargetHeight.HIGH)));
 
-    m_wantCubeButton = new POVButton(m_joystickCopilot, 0);
-    m_wantCubeButton.onTrue(Commands.runOnce(
-           () -> LimelightHelpers.setLEDMode_ForceOn("")));
+    m_shootMidButton = new POVButton(m_joystickCopilot, 90);
+    m_shootMidButton.onTrue(Commands.runOnce(
+           () -> Intake.getInstance().setOuttakeType(Intake.TargetHeight.MID)));
 
-    m_wantNoneButton = new POVButton(m_joystickCopilot, 180);
-    m_wantNoneButton.onTrue(Commands.runOnce(
-           () -> LimelightHelpers.setLEDMode_ForceOff("")));
+    m_shootHybridButton = new POVButton(m_joystickCopilot, 180);
+    m_shootHybridButton.onTrue(Commands.runOnce(
+           () -> Intake.getInstance().setOuttakeType(Intake.TargetHeight.HYBRID)));
 
     // m_hatButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
 
@@ -142,7 +140,7 @@ public final class Robot extends TimedRobot {
 
     m_intakingButton = new JoystickButton(m_joystickPilot, XboxController.Button.kLeftBumper.value);
     final var intakeCommand = new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING))
-      .andThen(new WaitUntilCommand(Intake.getInstance()::isExhaustStalled))
+      .andThen(new WaitUntilCommand(Intake.getInstance()::isBeamBroken))
       .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
     m_intakingButton.onTrue(intakeCommand);
     m_intakingButton.onFalse(new InstantCommand(intakeCommand::cancel));
@@ -165,6 +163,9 @@ public final class Robot extends TimedRobot {
     m_autonChooser.addOption("None", new WaitCommand(1.0));
     m_autonChooser.addOption("Auto balance auton", new BalanceAuto(Swerve.getInstance()));
     m_autonChooser.addOption("Side auton NEEDS TESTING", new SideAuto());
+    m_autonChooser.addOption("Two.5 auton", new TwoAndBalanceAuto());
+    m_autonChooser.addOption("Three auton", new ThreeAuto());
+    m_autonChooser.addOption("Straight auton", new DriveStraightAuton());
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
       // .andThen(new WaitUntilCommand(() -> Claw.getInstance().getObservedPiece().isPresent() && Claw.getInstance().getPieceConfidence()))
     SmartDashboard.putData(m_autonChooser);
@@ -189,11 +190,11 @@ public final class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    // Intake.getInstance().log();
-    Pivot.getInstance().log();
-    Elevator.getInstance().log();
+    Intake.getInstance().log();
+//    Pivot.getInstance().log();
+//    Elevator.getInstance().log();
     Wrist.getInstance().log();
-    Claw.getInstance().log();
+//    Claw.getInstance().log();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

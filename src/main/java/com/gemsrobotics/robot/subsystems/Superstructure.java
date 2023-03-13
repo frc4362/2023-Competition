@@ -28,7 +28,9 @@ public final class Superstructure implements Subsystem {
 		STOWED,
 		ATTAIN_POSE,
 		INTAKING,
-		OUTTAKING
+		OUTTAKING,
+		HYBRID,
+		CENTERING
 	}
 
 	public enum SystemState {
@@ -44,10 +46,12 @@ public final class Superstructure implements Subsystem {
 		ATTAINED_POSE,
 		RETURN_TO_CLEAR_ELEVATOR,
 		RETURN_TO_CLEAR_PIVOT,
+		HYBRID_PLACEMENT,
 
 		// intaking states
 		INTAKING,
-		OUTTAKING
+		OUTTAKING,
+		CENTERING
 	}
 
 	private final Timer m_stateChangedTimer, m_wantStateChangeTimer;
@@ -146,12 +150,21 @@ public final class Superstructure implements Subsystem {
 				newState = handleReturnToClearPivot();
 				break;
 
-			// intaking states
+			// other states
 			case INTAKING:
 				newState = handleIntaking();
 				break;
 			case OUTTAKING:
 				newState = handleOuttaking();
+				break;
+			case HYBRID_PLACEMENT:
+				newState = handlePlacingHybrid();
+				break;
+			case STARTING:
+				newState = handleStarting();
+				break;
+			case CENTERING:
+				newState = handleCentering();
 				break;
 
 			default:
@@ -178,6 +191,12 @@ public final class Superstructure implements Subsystem {
 				return SystemState.INTAKING;
 			case OUTTAKING:
 				return SystemState.OUTTAKING;
+			case HYBRID:
+				return SystemState.HYBRID_PLACEMENT;
+			case STARTING:
+				return SystemState.STARTING;
+			case CENTERING:
+				return SystemState.CENTERING;
 			default:
 				return SystemState.IDLE;
 		}
@@ -204,12 +223,37 @@ public final class Superstructure implements Subsystem {
 		return applyWantedState();
 	}
 
+	private SystemState handleStarting() {
+		m_wrist.setReferencePosition(Wrist.Position.PRELOAD);
+
+		return applyWantedState();
+	}
+
+	private SystemState handleCentering() {
+		m_intake.setState(State.CENTER);
+
+		return applyWantedState();
+	}
+
+	private SystemState handlePlacingHybrid() {
+		m_pivot.setReference(Pivot.Position.STOWED);
+
+
+		if (m_claw.getObservedPiece().map(piece -> piece == Claw.ObservedPiece.CUBE).orElse(false)) {
+			m_wrist.setReferencePosition(Wrist.Position.HYBRID_CUBE);
+		} else {
+			m_wrist.setReferencePosition(Wrist.Position.HYBRID_CONE);
+		}
+
+		return applyWantedState();
+	}
+
 	private SystemState handleWaitingForIntakeSafety() {
 		m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotSafety).orElse(Pivot.Position.STOWED));
 		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
 		m_claw.setGoal(m_poseGoal.map(SuperstructurePose::getClaw).orElse(Claw.Goal.CLOSED));
 
-		if (m_intake.atReference()) {
+		if (m_intake.atReference() || m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false)) {
 			return SystemState.WAITING_FOR_WRIST;
 		} else {
 			return applyWantedState();
@@ -254,7 +298,7 @@ public final class Superstructure implements Subsystem {
 		// 	m_intake.setState(State.RETRACTED);
 		// }
 
-		if (m_elevator.atReference() && m_pivot.atReference() && m_wrist.atReference()) {
+		if (m_elevator.atReference() && m_pivot.atReference() && m_wrist.atReference(5.0)) {
 			return SystemState.ATTAINED_POSE;
 		}
 
@@ -262,12 +306,29 @@ public final class Superstructure implements Subsystem {
 	}
 
 	private SystemState handleAttainedPose() {
-		// m_intake.setState(State.RETRACTED);
+		final var observedPiece = m_claw.getObservedPiece().orElse(null);
 
 		if (m_poseGoal.map(SuperstructurePose::getType).map(pose -> pose == Type.PLACEMENT).orElse(false)) {
-			m_wrist.setReferencePosition(m_wantsHat ? Wrist.Position.HAT : m_poseGoal.get().getWrist());
+			final Wrist.Position wristPosition;
+
+			if (m_wantsHat) {
+				if (observedPiece == Claw.ObservedPiece.CUBE) {
+					wristPosition = Wrist.Position.HAT;
+				} else if (observedPiece == Claw.ObservedPiece.CONE) {
+					wristPosition = Wrist.Position.HALF_HAT;
+				} else {
+					wristPosition = m_poseGoal.get().getWrist();
+				}
+			} else {
+				wristPosition = m_poseGoal.get().getWrist();
+			}
+
+			m_wrist.setReferencePosition(wristPosition);
+			m_pivot.setReference(m_wantsHat && observedPiece == Claw.ObservedPiece.CONE
+								 ? Pivot.Position.HATTING : m_poseGoal.get().getPivotGoal());
 		} else {
 			m_wrist.setReferencePosition(m_poseGoal.map(SuperstructurePose::getWrist).orElse(Wrist.Position.CLEAR));
+			m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotGoal).orElse(Position.SHELF_PICKUP));
 		}
 
 		if (m_stateWanted == WantedState.ATTAIN_POSE) {
@@ -326,7 +387,7 @@ public final class Superstructure implements Subsystem {
 
 	private SystemState handleOuttaking() {
 		m_pivot.setReference(Position.STOWED);
-		m_intake.setState(State.OUTTAKING);
+		m_intake.setOuttaking();
 
 		return applyWantedState();
 	}

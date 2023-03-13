@@ -16,19 +16,19 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
 public final class SideAuto extends SequentialCommandGroup {
     public SideAuto() {
-        final var trajectory = Constants.Generation.getBackwardTrajectory(
-            new Pose2d(0, 0, Rotation2d.fromDegrees(180)), 
-            List.of(
-                new Translation2d(Units.feetToMeters(9), 0)
-            ),
-            new Pose2d(Units.feetToMeters(15), Units.feetToMeters(2), Rotation2d.fromDegrees(0))
-        );
-
-        addCommands(
-            Claw.getInstance().requestGrab(),
-            new PlaceCommand(SuperstructurePose.HIGH_PLACE),
-            Swerve.getInstance().getAbsoluteTrackingCommand(trajectory),
-            Swerve.getInstance().getStopCommand()
-        );
+//        final var trajectory = Constants.Generation.getBackwardTrajectory(
+//            new Pose2d(0, 0, Rotation2d.fromDegrees(180)),
+//            List.of(
+//                new Translation2d(Units.feetToMeters(9), 0)
+//            ),
+//            new Pose2d(Units.feetToMeters(15), Units.feetToMeters(2), Rotation2d.fromDegrees(0))
+//        );
+//
+//        addCommands(
+//            Claw.getInstance().requestGrab(),
+//            new PlaceCommand(SuperstructurePose.HIGH_PLACE),
+//            Swerve.getInstance().getTrackingCommand(trajectory, false),
+//            Swerve.getInstance().getStopCommand()
+//        );
     }
 }

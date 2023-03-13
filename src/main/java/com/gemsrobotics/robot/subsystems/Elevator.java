@@ -36,7 +36,7 @@ public final class Elevator implements Subsystem {
 	private static final double
 			FORWARD_SOFT_LIMIT = 125_000,
 			REVERSE_SOFT_LIMIT = 0;
-	private static final double TOLERANCE_METERS = 0.07;
+	private static final double TOLERANCE_METERS = 0.1;
 	public static final double GEARING_MULTIPLIER = 1.0 / 9.0;
 
 	public static final double OUTPUT_VOLTS = 10;
@@ -86,9 +86,9 @@ public final class Elevator implements Subsystem {
 	public enum Position {
 		TRUE_BOTTOM(0.0),
 		SAFETY_BOTTOM(0.005),
-		FRONT_SAFETY(.15),
+		FRONT_SAFETY(.1),
 		SHELF_PICKUP(.645),
-		SCORING_MID(0.89),//0.87
+		SCORING_MID(0.895),//0.87
 		SCORING_HIGH(1.39),//1.38
 		SAFETY_TOP(1.39),
 		TRUE_TOP(1.39); // meters

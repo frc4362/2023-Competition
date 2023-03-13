@@ -5,6 +5,8 @@ import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.SwerveModule;
 import com.gemsrobotics.robot.Constants;
 
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -16,14 +18,11 @@ import com.ctre.phoenix.sensors.Pigeon2;
 
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
+import edu.wpi.first.wpilibj2.command.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -57,12 +56,20 @@ public final class Swerve implements Subsystem {
         m_imu.configFactoryDefault();
         m_imu.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_6_SensorFusion, 5);
 
+        // old
         m_swerveModules = List.of(
-            new SwerveModule(0, Constants.Swerve.Mod0.constants),
-            new SwerveModule(1, Constants.Swerve.Mod1.constants),
-            new SwerveModule(2, Constants.Swerve.Mod2.constants),
-            new SwerveModule(3, Constants.Swerve.Mod3.constants)
+                new SwerveModule(0, Constants.Swerve.Mod0.constants),
+                new SwerveModule(1, Constants.Swerve.Mod1.constants),
+                new SwerveModule(2, Constants.Swerve.Mod2.constants),
+                new SwerveModule(3, Constants.Swerve.Mod3.constants)
         );
+
+//        m_swerveModules = List.of(
+//            new SwerveModule(0, Constants.Swerve.Mod2.constants),
+//            new SwerveModule(1, Constants.Swerve.Mod3.constants),
+//            new SwerveModule(2, Constants.Swerve.Mod0.constants),
+//            new SwerveModule(3, Constants.Swerve.Mod1.constants)
+//        );
 
         /* By pausing init for a second before setting module offsets, we avoid a bug with inverting motors.
          * See https://github.com/Team364/BaseFalconSwerve/issues/8 for more info.
@@ -76,7 +83,7 @@ public final class Swerve implements Subsystem {
         m_deltaPitchAverage = 0.0;
 
         m_fieldDisplay = new Field2d();
-        // SmartDashboard.putData(m_fieldDisplay);
+        SmartDashboard.putData(m_fieldDisplay);
 
         // TODO tune the filter
         m_swervePoseEstimator = new SwerveDrivePoseEstimator(
@@ -206,21 +213,33 @@ public final class Swerve implements Subsystem {
         return allowed;
     }
 
-    public Command getAbsoluteTrackingCommand(final Trajectory trajectory) {
-        return new SwerveControllerCommand(
+    public Command getTrackingCommand(final PathPlannerTrajectory trajectory, final boolean isFirstPath) {
+        return new SequentialCommandGroup(
+            new InstantCommand(() -> {
+                // Reset odometry for the first path you run during auto
+                if (isFirstPath) {
+                    final var transformedState = PathPlannerTrajectory.transformStateForAlliance(
+                            trajectory.getInitialState(),
+                            DriverStation.getAlliance());
+                    final var initialHolonomicPose = new Pose2d(
+                            transformedState.poseMeters.getTranslation(),
+                            transformedState.holonomicRotation);
+
+                    resetOdometry(initialHolonomicPose);
+                }
+            }),
+            new PPSwerveControllerCommand(
                 trajectory,
                 this::getPose,
                 Constants.Swerve.swerveKinematics,
                 new PIDController(Constants.AutoConstants.kPXController, 0, 0),
                 new PIDController(Constants.AutoConstants.kPYController, 0, 0),
-                Constants.Generation.thetaController,
+                Constants.Generation.pureThetaController,
                 this::setModuleStates,
-                this);
-    }
-
-    public Command getRelativeTrackingCommand(final Trajectory trajectory) {
-        return runOnce(() -> trajectory.relativeTo(getPose()))
-                       .andThen(getAbsoluteTrackingCommand(trajectory));
+                true, // Should we mirror path
+                this
+            )
+        );
     }
 
     public Command getStopCommand() {
@@ -263,14 +282,14 @@ public final class Swerve implements Subsystem {
         }
 
         // TODO does this even show up on the map at all lol
-        final var FIELD = new Translation2d(15.980, 8.21);
-        final var estimated = m_swervePoseEstimator.getEstimatedPosition();
-        final var fixedPose = FIELD.minus(estimated.getTranslation());
-        m_fieldDisplay.setRobotPose(new Pose2d(fixedPose, estimated.getRotation().rotateBy(Rotation2d.fromDegrees(180))));
+//        final var FIELD = new Translation2d(15.980, 8.21);
+//        final var estimated = m_swervePoseEstimator.getEstimatedPosition();
+//        final var fixedPose = FIELD.minus(estimated.getTranslation());
+        m_fieldDisplay.setRobotPose(m_swervePoseEstimator.getEstimatedPosition());
 
         // SmartDashboard.putNumber("Yaw", m_imu.getYaw());
         // SmartDashboard.putNumber("Pitch", m_imu.getPitch());
         // SmartDashboard.putNumber("Roll", m_imu.getRoll());
-        // SmartDashboard.putString("Pose", m_swervePoseEstimator.getEstimatedPosition().toString());
+        SmartDashboard.putString("Pose", m_swervePoseEstimator.getEstimatedPosition().toString());
     }
 }

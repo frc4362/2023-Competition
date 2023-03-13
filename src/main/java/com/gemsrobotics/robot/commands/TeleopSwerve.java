@@ -17,7 +17,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 
 
 public final class TeleopSwerve extends CommandBase {    
-    private static final boolean DO_SNAP_TURN = true;
+    private static final boolean USE_PLACEMENT_FEEDBACK = true;
     private static final int FILTER_SIZE = 3;
     private static final boolean DO_VISION_ADJUSTMENT = false;
     private static final double VISION_kP = -0.1;
@@ -98,7 +98,7 @@ public final class TeleopSwerve extends CommandBase {
         /* Drive */
         m_swerve.setDrive(
             (DO_VISION_ADJUSTMENT && m_useVision.getAsBoolean()) ? new Translation2d(openLoopTranslation.getX(), visionFeedback) : openLoopTranslation,
-            m_placing.getAsBoolean() ? placementAngleFeedback : openLoopRotation,
+            m_placing.getAsBoolean() && USE_PLACEMENT_FEEDBACK ? placementAngleFeedback : openLoopRotation,
             !m_isRobotCentric.getAsBoolean(),
             true
         );

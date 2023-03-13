@@ -33,9 +33,9 @@ public final class Wrist implements Subsystem {
 	private static final double kS = 0.07;
 
 	private static final double GEARING_MULTIPLIER = 1 / 38.94;
-	private static final double TOLERANCE = 1.25;
+	private static final double TOLERANCE = 2.0;
 	public static final double STARTING_ROTATION_FROM_ELEVATOR = 0.638;// Rotation2d.fromDegrees(230);//-54
-	public static final int MAX_FEEDBACK_VOLTS = 4;
+	public static final double MAX_FEEDBACK_VOLTS = 5.5;
 
 	private final MotorController<TalonFX> m_motor;
 	private final ArmFeedforward m_feedforward;
@@ -68,11 +68,16 @@ public final class Wrist implements Subsystem {
 	// Negative numbers are forwards from the elevator
 	public enum Position {
 		STARTING(230.0 / 360.0), //-54
+		PRELOAD(30.0 / 360.0),
+		HYBRID_CUBE(170 / 360.0),
+		HYBRID_CONE(180 / 360.0),
 		SCORING_MID(-16.0 / 360.0),
-		SCORING_HIGH(-16 / 360.0),
-		HAT(-41 / 360.0),
+		SCORING_HIGH(-16.0 / 360.0),
+		HALF_HAT(-20 / 360.0),
+		HAT(-46 / 360.0),
 		SHELF_PICKUP(-49 / 360.0),
-		CLEAR(0.0 / 360.0),
+		CLEAR(-4 / 360.0),
+		STOWED_SHUTOFF(205.0 / 360.0),
 		STOWED(210.0 / 360.0);
 
 		public final double rotation;
@@ -132,10 +137,14 @@ public final class Wrist implements Subsystem {
 
 	@Override
 	public void periodic() {
-		final var ff = m_feedforward.calculate(getAngleToGround().getRadians(), 0.0);
-		var feedback = m_controller.calculate(getRotationsToElevator(), m_referenceRotations);
-		final var clampedFeedback = MathUtils.coerce(-MAX_FEEDBACK_VOLTS, feedback, MAX_FEEDBACK_VOLTS);
+		if (m_referenceRotations == Position.STOWED.rotation && getRotationsToElevator() > Position.STOWED_SHUTOFF.rotation) {
+			m_motor.setNeutral();
+		} else {
+			final var ff = m_feedforward.calculate(getAngleToGround().getRadians(), 0.0);
+			var feedback = m_controller.calculate(getRotationsToElevator(), m_referenceRotations);
+			final var clampedFeedback = MathUtils.coerce(-MAX_FEEDBACK_VOLTS, feedback, MAX_FEEDBACK_VOLTS);
 
-		m_motor.setVoltage(clampedFeedback, ff + kS * signum(feedback));
+			m_motor.setVoltage(clampedFeedback, ff + kS * signum(feedback));
+		}
 	}
 }

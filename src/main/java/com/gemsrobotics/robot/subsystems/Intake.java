@@ -8,7 +8,9 @@ import com.gemsrobotics.lib.drivers.MotorController;
 import com.gemsrobotics.lib.drivers.MotorControllerFactory;
 import com.gemsrobotics.lib.drivers.MotorController.NeutralBehaviour;
 import com.gemsrobotics.robot.Constants;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
@@ -30,15 +32,15 @@ public class Intake implements Subsystem {
 
 	private static final int DRIVE_MOTOR_ID = 20;
 	private static final String DRIVE_MOTOR_BUS = Constants.CANBusses.MAIN;
-
-	private static final double kP = 0.018;
-	private static final double kG = -0.9 / 12.0; // convert to duty cycle
+	private static final double kP = 0.022; // 0.018
+	private static final double kG = -0.45 / 12.0; // convert to duty cycle
 
 	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(5.0);
 
 	private final TalonFX m_motorPosition;
-	private final TalonFX m_motorDrive;
-	private final TalonFX m_motorExhaust;
+	private final TalonFX m_rollerBottom;
+	private final TalonFX m_rollerTop;
+	private final DigitalInput m_beamBreak;
 
 	public enum Mode {
 		POSITION,
@@ -48,38 +50,56 @@ public class Intake implements Subsystem {
 	public enum State {
 		RETRACTED(0, 0.0, 0),
 		BALANCED(9_800, 0.0, 0),
-		MIDDLE(24_000, 0.0, 0), // 25 000
-		EXTENDED(38_000, 0.0, 0),
-		INTAKING(38_000, 0.4, 0.4), //e 0.05
-		OUTTAKING(0, -1, 1.0);
+		MIDDLE(11_000, 0.0, 0), // 25 000
+		EXTENDED(29_850, 0.0, 0),
+		INTAKING(29_850, -0.8, .8), //e 0.05
+		OUTTAKING_HIGH(0, .775, -0.6),
+		OUTTAKING_MID(0, 0.4, -0.35),
+		OUTTAKING_HYBRID(0, 0.15,-0.2),
+		CENTER(0, -1.0, 1.0);
 
-		public static final double TICKS_PER_DEGREE = (EXTENDED.ticks - 12_000) / 90.0;
+		public static final double TICKS_PER_DEGREE = (EXTENDED.ticks - 4_700) / 90.0;
 
 		public final int ticks;
-		public final double drive;
-		public final double exhaust;
+		public final double topDutyCycle;
+		public final double bottomDutyCycle;
 
 		State(final int t, final double d, final double e) {
 			ticks = t;
-			drive = d;
-			exhaust = e;
+			topDutyCycle = d;
+			bottomDutyCycle = e;
+		}
+	}
+
+	public enum TargetHeight {
+		HIGH(State.OUTTAKING_HIGH),
+		MID(State.OUTTAKING_MID),
+		HYBRID(State.OUTTAKING_HYBRID);
+
+		public final State outtakeState;
+
+		TargetHeight(final State state) {
+			outtakeState = state;
 		}
 	}
 
 	private Mode m_mode;
 	private State m_state;
+	private TargetHeight m_height;
+	private final LinearFilter m_filter;
+	private double m_beamAverage;
 
 	private Intake() {
 		final var positionMotor = MotorControllerFactory.createDefaultTalonFX(POSITION_MOTOR_ID, POSITION_MOTOR_BUS);
 		positionMotor.setInvertedOutput(false);
-		positionMotor.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
+		positionMotor.setNeutralBehaviour(MotorController.NeutralBehaviour.COAST);
 
 		m_motorPosition = positionMotor.getInternalController();
 		m_motorPosition.config_kP(0, kP);
 		m_motorPosition.config_kI(0, 0.0);
 		m_motorPosition.config_kD(0, 0.0);
 		m_motorPosition.configAllowableClosedloopError(0, State.TICKS_PER_DEGREE * 1.5);
-		m_motorPosition.configNeutralDeadband(0.04);
+		m_motorPosition.configNeutralDeadband(0.06);
 
 		m_motorPosition.configNominalOutputReverse(-0.03);
 		m_motorPosition.configNominalOutputForward(0.03);
@@ -94,8 +114,8 @@ public class Intake implements Subsystem {
 		driveMotor.setInvertedOutput(true);
 		driveMotor.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
 
-		m_motorDrive = driveMotor.getInternalController();
-		m_motorDrive.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(
+		m_rollerBottom = driveMotor.getInternalController();
+		m_rollerBottom.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(
 				true,
 				100,
 				100,
@@ -105,14 +125,19 @@ public class Intake implements Subsystem {
 		exhaust.setInvertedOutput(false);
 		exhaust.setNeutralBehaviour(NeutralBehaviour.BRAKE);
 
-		m_motorExhaust = exhaust.getInternalController();
+		m_rollerTop = exhaust.getInternalController();
+
+		m_beamBreak = new DigitalInput(9);
+		m_beamAverage = 0.0;
+		m_filter = LinearFilter.movingAverage(5);
 
 		m_mode = Mode.DISABLED;
 		m_state = State.RETRACTED;
+		m_height = TargetHeight.HIGH;
 	}
 
-	public boolean isExhaustStalled() {
-		return m_motorExhaust.getStatorCurrent() > 60; //20
+	public boolean isBeamBroken() {
+		return m_beamAverage > 0.8; //20
 	}
 
 	public void setDisabled() {
@@ -122,6 +147,14 @@ public class Intake implements Subsystem {
 	public void setState(final State state) {
 		m_mode = Mode.POSITION;
 		m_state = state;
+	}
+
+	public void setOuttaking() {
+		setState(m_height.outtakeState);
+	}
+
+	public void setOuttakeType(final TargetHeight height) {
+		m_height = height;
 	}
 
 	public Rotation2d getApproximateAngle() {
@@ -144,27 +177,30 @@ public class Intake implements Subsystem {
 	}
 
 	public void log() {
-		SmartDashboard.putNumber("Intake Amps Drawn", m_motorDrive.getStatorCurrent());
+		SmartDashboard.putNumber("Intake Amps Drawn", m_rollerBottom.getStatorCurrent());
 		SmartDashboard.putNumber("Intake Pos", m_motorPosition.getSelectedSensorPosition());
 		SmartDashboard.putNumber("Intake Error", getError());
-		SmartDashboard.putNumber("Exhaust Current", m_motorExhaust.getStatorCurrent());
+		SmartDashboard.putNumber("Exhaust Current", m_rollerTop.getStatorCurrent());
+		SmartDashboard.putNumber("Beam Broken", m_beamAverage);
 	}
 
 	@Override
 	public void periodic() {
+		m_beamAverage = m_filter.calculate(!m_beamBreak.get() ? 1.0 : 0.0);
+
 		switch (m_mode) {
 			case POSITION:
 				m_motorPosition.set(
 						ControlMode.Position, m_state.ticks,
-						DemandType.ArbitraryFeedForward, kG * getApproximateAngle().getCos());
-				m_motorDrive.set(ControlMode.PercentOutput, m_state.drive);
-				m_motorExhaust.set(ControlMode.PercentOutput, m_state.exhaust);
+						DemandType.ArbitraryFeedForward, 0/*kG * getApproximateAngle().getCos()*/);
+				m_rollerBottom.set(ControlMode.PercentOutput, m_state.topDutyCycle);
+				m_rollerTop.set(ControlMode.PercentOutput, m_state.bottomDutyCycle);
 				break;
 			case DISABLED:
 			default:
 				m_motorPosition.set(ControlMode.PercentOutput, 0.0);
-				m_motorDrive.set(ControlMode.PercentOutput, 0.0);
-				m_motorExhaust.set(ControlMode.PercentOutput, 0.0);
+				m_rollerBottom.set(ControlMode.PercentOutput, 0.0);
+				m_rollerTop.set(ControlMode.PercentOutput, 0.0);
 				break;
 		}
 	}

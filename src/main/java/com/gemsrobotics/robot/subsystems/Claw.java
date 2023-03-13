@@ -18,13 +18,20 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 
 public final class Claw implements Subsystem {
-	public static final double CONE_THRESHOLD_ROTATIONS = -.31;
-
-	public static final double PIECE_DETECTION_TIME = 0.5;
-	public static final int PIECE_GRIPPED_THRESHOLD_AMPS = 35;
-	public static final double NOTHING_THRESHOLD_ROTATIONS = -.35;
-
 	private static Claw INSTANCE = null;
+
+	public static Claw getInstance() {
+		if (Objects.isNull(INSTANCE)) {
+			INSTANCE = new Claw();
+		}
+
+		return INSTANCE;
+	}
+
+	private static final double CONE_THRESHOLD_ROTATIONS = -.3;
+	private static final double PIECE_DETECTION_TIME = 0.25;
+	private static final int PIECE_GRIPPED_THRESHOLD_AMPS = 35;
+	private static final double NOTHING_THRESHOLD_ROTATIONS = -.387;
 
 	private static final int CLAW_DRIVE_MOTOR_ID = 19;
 	private static final String CLAW_DRIVE_MOTOR_BUS = Constants.CANBusses.MAIN;
@@ -50,14 +57,6 @@ public final class Claw implements Subsystem {
 	private IntakeState m_intakeState;
 	private boolean m_forceGrip;
 	private double m_lastOpenTime;
-
-	public static Claw getInstance() {
-		if (Objects.isNull(INSTANCE)) {
-			INSTANCE = new Claw();
-		}
-
-		return INSTANCE;
-	}
 
 	private Claw() {
 		m_motorDrive = MotorControllerFactory.createDefaultTalonFX(CLAW_DRIVE_MOTOR_ID, CLAW_DRIVE_MOTOR_BUS);
@@ -94,7 +93,7 @@ public final class Claw implements Subsystem {
 	public enum IntakeState {
 		NEUTRAL(0.0),
 		INTAKING(0.2),
-		OUTTAKING(-0.2);
+		OUTTAKING(-0.5);
 
 		public final double dutyCycle;
 
@@ -173,6 +172,7 @@ public final class Claw implements Subsystem {
 		return runOnce(
 				() -> {
 					setGoal(Goal.GRIPPING);
+					setForceGrip(true);
 					setIntakeState(IntakeState.INTAKING);
 				})
 			    .andThen(new WaitUntilCommand(() -> getObservedPiece().isPresent() && getPieceConfidence())
@@ -223,14 +223,14 @@ public final class Claw implements Subsystem {
 				break;
 
 			case OPEN:
-//				if (m_forceGrip) {
-//					m_motorGrip.setVoltage(-1.0);
-//				} else
-				if (m_motorGrip.getPositionRotations() < GRIP_OPEN_POSITION) {
+				if (m_forceGrip) {
+					m_motorGrip.setVoltage(-1.0);
+				} else if (m_motorGrip.getPositionRotations() < GRIP_OPEN_POSITION) {
 					m_motorGrip.setVoltage(2.0);
 				} else {
 					m_motorGrip.setVoltage(0.0);
 				}
+
 				break;
 
 			case NEUTRAL:
