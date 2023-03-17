@@ -52,7 +52,7 @@ public class Intake implements Subsystem {
 		BALANCED(9_800, 0.0, 0),
 		MIDDLE(11_000, 0.0, 0), // 25 000
 		EXTENDED(29_850, 0.0, 0),
-		INTAKING(29_850, -0.8, .8), //e 0.05
+		INTAKING(29_850, -0.5, .5), //e 0.05
 		OUTTAKING_HIGH(0, .775, -0.6),
 		OUTTAKING_MID(0, 0.4, -0.35),
 		OUTTAKING_HYBRID(0, 0.15,-0.2),

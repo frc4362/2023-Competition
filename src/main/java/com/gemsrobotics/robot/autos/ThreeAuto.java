@@ -22,12 +22,12 @@ public class ThreeAuto extends SequentialCommandGroup {
 						Claw.getInstance().requestGrab(),
 						new ParallelCommandGroup(
 								new PlaceCommand(SuperstructurePose.HIGH_PLACE).andThen(new WaitCommand(0.05)).andThen(new IntakeUntilCubeCommand(3.0)),
-								new WaitCommand(2.25).andThen(Swerve.getInstance().getTrackingCommand(path, true))
+								new WaitCommand(2.).andThen(Swerve.getInstance().getTrackingCommand(path, true))
 						),
 						new ShootCommand(Intake.TargetHeight.HIGH, 0.25),
 						new ParallelCommandGroup(
 								Swerve.getInstance().getTrackingCommand(path3, false),
-								new WaitCommand(1.25).andThen(new IntakeUntilCubeCommand(3.0))
+								new WaitCommand(1.25).andThen(new IntakeUntilCubeCommand(2.0))
 						),
 						Swerve.getInstance().getStopCommand(),
 						new ShootCommand(Intake.TargetHeight.HIGH, 0.25)
