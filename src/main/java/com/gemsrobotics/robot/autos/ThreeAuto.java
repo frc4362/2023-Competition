@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 public class ThreeAuto extends SequentialCommandGroup {
 	public ThreeAuto() {
 		final var path = PathPlanner.loadPath("Test Path", Constants.Generation.constraints);
-		final var path3 = PathPlanner.loadPath("Test Path 3", Constants.Generation.constraints);
+		final var path3 = PathPlanner.loadPath("Test Path 3 Alternative", Constants.Generation.constraints);
 
 		addCommands(
 				new SequentialCommandGroup(

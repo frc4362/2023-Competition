@@ -336,7 +336,7 @@ public final class Superstructure implements Subsystem {
 			if (poseType.map(type -> type == SuperstructurePose.Type.PICKUP).orElse(false)
 				&& m_claw.getObservedPiece().isPresent() && m_claw.getPieceConfidence()
 			) {
-				LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF));
+				// LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF));
 				setWantedState(WantedState.STOWED);
 				return SystemState.RETURN_TO_CLEAR_ELEVATOR;
 			} else if (poseType.map(type -> type == SuperstructurePose.Type.PLACEMENT).orElse(false)

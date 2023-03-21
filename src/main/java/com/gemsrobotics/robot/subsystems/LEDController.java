@@ -27,7 +27,6 @@ public final class LEDController implements Subsystem {
 	private static final String CANDLE_BUS = Constants.CANBusses.MAIN;
 	private final Command m_pulseRedCommand;
 	private final CANdle m_candle;
-	private final Animation m_animation;
 
 	private State m_state;
 
@@ -37,10 +36,11 @@ public final class LEDController implements Subsystem {
 		CANdleConfiguration configAll = new CANdleConfiguration();
 		configAll.statusLedOffWhenActive = true;
 		configAll.disableWhenLOS = false;
-		configAll.stripType = CANdle.LEDStripType.GRB;
+		configAll.stripType = CANdle.LEDStripType.BRG;
 		configAll.brightnessScalar = 1.0;
 		configAll.vBatOutputMode = CANdle.VBatOutputMode.Off;
 		m_candle.configAllSettings(configAll, 100);
+		m_candle.clearAnimation(0);
 
 		m_pulseRedCommand = runOnce(() -> setLEDs(Color.kRed))
 									.andThen(new WaitCommand(0.2))
@@ -53,14 +53,15 @@ public final class LEDController implements Subsystem {
 									.andThen(() -> setLEDs(Color.kRed))
 									.andThen(new WaitCommand(0.2));
 
-		m_animation = new RainbowAnimation(1, 1, 60);
 		m_state = State.OFF;
 	}
 
 	public enum State {
 		OFF(Color.kBlack),
-		WANTS_CONE(Color.kYellow),
-		WANTS_CUBE(Color.kMediumPurple);
+		WANTS_CONE(Color.kTeal),
+		WANTS_SHELF_CUBE(Color.kYellow),
+		WANTS_CUBE(Color.kPurple),
+		IDLE(Color.kGreen);
 
 		public final Color color;
 
@@ -74,17 +75,17 @@ public final class LEDController implements Subsystem {
 	}
 
 	private void setLEDs(final Color color) {
-		m_candle.setLEDs((int) color.red, (int) color.blue, (int) color.green, 0, 0, 60);
+		m_candle.setLEDs((int) (color.blue * 255), (int) (color.red * 255), (int) (color.green * 255));
 	}
 
 	private void conformToState() {
 		setLEDs(m_state.color);
 	}
 
-//	@Override
-//	public Command getDefaultCommand() {
-////		return run(this::conformToState);
-//	}
+	@Override
+	public Command getDefaultCommand() {
+		return run(this::conformToState);
+	}
 
 	public void requestPulseRed() {
 		m_pulseRedCommand.schedule();
@@ -92,6 +93,6 @@ public final class LEDController implements Subsystem {
 
 	@Override
 	public void periodic() {
-		 m_candle.setLEDs(0, 255, 0);
+		conformToState();
 	}
 }

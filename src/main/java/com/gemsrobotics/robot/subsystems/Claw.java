@@ -178,7 +178,7 @@ public final class Claw implements Subsystem {
 			    .andThen(new WaitUntilCommand(() -> getObservedPiece().isPresent() && getPieceConfidence())
 								.raceWith(new WaitCommand(2.5).andThen(() -> {
 									setGoal(Goal.OPEN);
-									LEDController.getInstance().ifPresent(LEDController::requestPulseRed);
+									// LEDController.getInstance().ifPresent(LEDController::requestPulseRed);
 								})))
 			    .finallyDo(interrupted -> setIntakeState(IntakeState.NEUTRAL));
 	}

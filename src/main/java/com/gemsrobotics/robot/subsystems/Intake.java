@@ -56,6 +56,7 @@ public class Intake implements Subsystem {
 		OUTTAKING_HIGH(0, .775, -0.6),
 		OUTTAKING_MID(0, 0.4, -0.35),
 		OUTTAKING_HYBRID(0, 0.15,-0.2),
+		CLEAR_INTAKE(25_000, 0.5, -0.5),
 		CENTER(0, -1.0, 1.0);
 
 		public static final double TICKS_PER_DEGREE = (EXTENDED.ticks - 4_700) / 90.0;
@@ -74,7 +75,8 @@ public class Intake implements Subsystem {
 	public enum TargetHeight {
 		HIGH(State.OUTTAKING_HIGH),
 		MID(State.OUTTAKING_MID),
-		HYBRID(State.OUTTAKING_HYBRID);
+		HYBRID(State.OUTTAKING_HYBRID),
+		CLEAR_INTAKE(State.CLEAR_INTAKE);
 
 		public final State outtakeState;
 

@@ -190,7 +190,8 @@ public final class Swerve implements Subsystem {
     }
 
     public Command waitForPitchAround(final Rotation2d targetPitch, final double tolerance) {
-        return new WaitUntilCommand(() -> abs(getPitch().minus(targetPitch).getDegrees()) < tolerance);
+
+        return new WaitUntilCommand(() -> (abs(getPitch().minus(targetPitch).getDegrees())) < tolerance);
     }
 
     public Command waitForPitchAround(final Rotation2d targetPitch) {
@@ -287,9 +288,9 @@ public final class Swerve implements Subsystem {
 //        final var fixedPose = FIELD.minus(estimated.getTranslation());
         m_fieldDisplay.setRobotPose(m_swervePoseEstimator.getEstimatedPosition());
 
-        // SmartDashboard.putNumber("Yaw", m_imu.getYaw());
-        // SmartDashboard.putNumber("Pitch", m_imu.getPitch());
-        // SmartDashboard.putNumber("Roll", m_imu.getRoll());
+        SmartDashboard.putNumber("Yaw", m_imu.getYaw());
+        SmartDashboard.putNumber("Pitch", m_imu.getPitch());
+        SmartDashboard.putNumber("Roll", m_imu.getRoll());
         SmartDashboard.putString("Pose", m_swervePoseEstimator.getEstimatedPosition().toString());
     }
 }

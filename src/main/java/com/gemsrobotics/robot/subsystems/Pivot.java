@@ -74,6 +74,7 @@ public class Pivot implements Subsystem {
 		RETURNED(Rotation2d.fromDegrees(62)),
 		SHELF_PICKUP(Rotation2d.fromDegrees(54)),
 		SCORING(Rotation2d.fromDegrees(40.5)),
+		AUTON_SCORING(Rotation2d.fromDegrees(40.5)),
 		HATTING(Rotation2d.fromDegrees(33.5));
 
 		public final Rotation2d rotation;

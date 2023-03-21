@@ -3,28 +3,6 @@ package com.gemsrobotics.robot.subsystems;
 import com.gemsrobotics.robot.subsystems.Elevator.Position;
 
 public final class SuperstructurePose {
-    // TODO
-//    public static final SuperstructureState STARTING = new SuperstructureState(Rotation2d.fromDegrees(54), -54.0, 0.025);
-//    public static final SuperstructureState
-//            // internal pickup states
-//            STOWED_FOR_SPINDEXER = null,
-//            RECEIVING_FROM_SPINDEXER = null,
-//
-//            // shelf pickup states
-//            STOWED_FOR_SHELF = null,
-//            RECEIVING_FROM_WALL = null,
-//
-//            // floor pickup states
-//            RECEIVING_FROM_GROUND = null,
-//
-//            // scoring states
-//            SCORING_HYBRID = null,
-//            SCORING_MID = null,
-//            SCORING_HIGH = null,
-//
-//            // general states
-//            STOWED = null;
-
     public enum Type {
         PICKUP,
         PLACEMENT
@@ -52,6 +30,14 @@ public final class SuperstructurePose {
             Wrist.Position.SCORING_HIGH,
             Elevator.Position.SCORING_HIGH,
             Claw.Goal.CLOSED
+    );
+
+    public static final SuperstructurePose AUTON_PLACE = new SuperstructurePose(
+        Type.PLACEMENT,
+        Pivot.Position.AUTON_SCORING,
+        Wrist.Position.SCORING_HIGH,
+        Elevator.Position.SCORING_HIGH,
+        Claw.Goal.CLOSED
     );
 
     private final Type m_type;

@@ -6,12 +6,16 @@ package com.gemsrobotics.robot;
 
 import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.autos.*;
+import com.gemsrobotics.robot.commands.DriveOntoPlatform;
+import com.gemsrobotics.robot.commands.PlaceCommand;
 import com.gemsrobotics.robot.commands.TeleopSwerve;
 import com.gemsrobotics.robot.subsystems.*;
+import com.gemsrobotics.robot.subsystems.LEDController.State;
 import com.gemsrobotics.robot.subsystems.Superstructure.SystemState;
 import com.gemsrobotics.robot.subsystems.Superstructure.WantedState;
 
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
@@ -44,7 +48,8 @@ public final class Robot extends TimedRobot {
   public POVButton
           m_shootHighButton,
           m_shootMidButton,
-          m_shootHybridButton;
+          m_shootHybridButton,
+          m_shootExhaustButton;
 
   private SendableChooser<Command> m_autonChooser;
   private Command m_teleopSwerveCommand, m_autonomousCommand;
@@ -122,6 +127,10 @@ public final class Robot extends TimedRobot {
     m_shootHybridButton.onTrue(Commands.runOnce(
            () -> Intake.getInstance().setOuttakeType(Intake.TargetHeight.HYBRID)));
 
+    m_shootExhaustButton = new POVButton(m_joystickCopilot, 270);
+    m_shootExhaustButton.onTrue(Commands.runOnce(
+           () -> Intake.getInstance().setOuttakeType(Intake.TargetHeight.CLEAR_INTAKE)));
+
     // m_hatButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
 
     m_clawOpenButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kRightBumper.value);
@@ -162,10 +171,15 @@ public final class Robot extends TimedRobot {
     m_autonChooser = new SendableChooser<>();
     m_autonChooser.addOption("None", new WaitCommand(1.0));
     m_autonChooser.addOption("Auto balance auton", new BalanceAuto(Swerve.getInstance()));
-    m_autonChooser.addOption("Side auton NEEDS TESTING", new SideAuto());
     m_autonChooser.addOption("Two.5 auton", new TwoAndBalanceAuto());
     m_autonChooser.addOption("Three auton", new ThreeAuto());
     m_autonChooser.addOption("Straight auton", new DriveStraightAuton());
+    m_autonChooser.addOption("Test auto", new DriveOntoPlatform(Swerve.getInstance(), new Translation2d(-.35, 0.0), .15)
+        .andThen(Swerve.getInstance().getStopCommand()));
+    m_autonChooser.addOption("Test placement auto", new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.STARTING))
+        .andThen(Claw.getInstance().requestGrab())
+        .andThen(new PlaceCommand(SuperstructurePose.AUTON_PLACE)));
+
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
       // .andThen(new WaitUntilCommand(() -> Claw.getInstance().getObservedPiece().isPresent() && Claw.getInstance().getPieceConfidence()))
     SmartDashboard.putData(m_autonChooser);
@@ -190,10 +204,10 @@ public final class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    Intake.getInstance().log();
+    // Intake.getInstance().log();
 //    Pivot.getInstance().log();
 //    Elevator.getInstance().log();
-    Wrist.getInstance().log();
+    // Wrist.getInstance().log();
 //    Claw.getInstance().log();
   }
 
@@ -205,6 +219,11 @@ public final class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
+    if (m_autonChooser.getSelected() != null && !(m_autonChooser.getSelected() instanceof WaitCommand)) {
+      LEDController.getInstance().ifPresent(controller -> controller.setState(State.IDLE));
+    } else {
+      LEDController.getInstance().ifPresent(controller -> controller.setState(State.OFF));
+    }
   }
 
   /** This autonomous runs the autonomous command selected by your class. */
@@ -248,18 +267,12 @@ public final class Robot extends TimedRobot {
 
     Superstructure.getInstance().setDoHat(m_joystickCopilot.getLeftBumper());
 
-//    Claw.getInstance().setIntakeState(m_joystickPilot.getYButton());
-
-//    double newP = SmartDashboard.getNumber(PIVOT_KEY, Double.NaN);
-//
-//    if (!Double.isNaN(newP)) {
-//      Pivot.getInstance().setReference(Rotation2d.fromDegrees(newP));
-//    }
-//    Elevator.getInstance().setReference(MathUtils.coerce(0.02, SmartDashboard.getNumber(ELEVATOR_KEY, 0.02), 1.38));
-//    Intake.getInstance().setReference(SmartDashboard.getNumber(INTAKE_KEY, 0.0));
-//    Wrist.getInstance().setReferenceAngleToElevator(Units.degreesToRotations(MathUtils.coerce(
-//            -54,
-//            SmartDashboard.getNumber(WRIST_KEY, Wrist.STARTING_ANGLE_FROM_ELEVATOR.getDegrees()),
-//            160)));
+    if (m_joystickCopilot.getLeftTriggerAxis() > 0.9) {
+      LEDController.getInstance().ifPresent(controller -> controller.setState(State.WANTS_CUBE));
+    } else if (m_joystickCopilot.getRightTriggerAxis() > 0.9) {
+      LEDController.getInstance().ifPresent(controller -> controller.setState(State.WANTS_CONE));
+    } else if (m_joystickCopilot.getBackButton()) {
+      LEDController.getInstance().ifPresent(controller -> controller.setState(State.WANTS_SHELF_CUBE));
+    }
   }
 }
