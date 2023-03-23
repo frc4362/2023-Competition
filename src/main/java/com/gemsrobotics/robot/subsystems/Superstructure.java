@@ -68,6 +68,8 @@ public final class Superstructure implements Subsystem {
 	private final Wrist m_wrist;
 	private final Claw m_claw;
 
+	private boolean m_shelfPickUpLimiter;
+
 	private Superstructure() {
 		m_intake = Intake.getInstance();
 		m_elevator = Elevator.getInstance();
@@ -83,6 +85,7 @@ public final class Superstructure implements Subsystem {
 		m_stateWanted = WantedState.STOWED;
 
 		m_wantsHat = false;
+		m_shelfPickUpLimiter = false;
 		m_poseGoal = Optional.empty();
 	}
 
@@ -115,6 +118,9 @@ public final class Superstructure implements Subsystem {
 		m_wantsHat = h;
 	}
 
+	public boolean isShelfPickupLimiter() {
+		return m_shelfPickUpLimiter;
+	}
 	@Override
 	public void periodic() {
 		SmartDashboard.putString("Wanted State", m_stateWanted.toString());
@@ -179,6 +185,12 @@ public final class Superstructure implements Subsystem {
 		} else {
 			m_stateChanged = false;
 		}
+
+		//On pickup of peice turn off limiter
+		if(m_shelfPickUpLimiter == true && null != m_claw.getObservedPiece().orElse(null)) {
+			m_shelfPickUpLimiter = false;
+		}
+
 	}
 
 	private SystemState applyWantedState() {
@@ -215,6 +227,8 @@ public final class Superstructure implements Subsystem {
 		m_wrist.setReferencePosition(Wrist.Position.STOWED);
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
 		// m_claw.setIdealStowedGoal();
+
+		m_shelfPickUpLimiter = false; // TODO probaly make this more intentional
 
 		if (m_intake.atReference()) {
 			m_pivot.setReference(Pivot.Position.STOWED);
@@ -266,6 +280,8 @@ public final class Superstructure implements Subsystem {
 		m_wrist.setReferencePosition(Wrist.Position.CLEAR);
 		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
 		m_claw.setGoal(m_poseGoal.map(SuperstructurePose::getClaw).orElse(Claw.Goal.CLOSED));
+
+		m_shelfPickUpLimiter = m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false);
 
 		if (m_wrist.isSafeFromElevatorCollision()
 			&& m_elevator.atReference()

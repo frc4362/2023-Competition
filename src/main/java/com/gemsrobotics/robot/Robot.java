@@ -165,6 +165,7 @@ public final class Robot extends TimedRobot {
             () -> -m_joystickPilot.getRightX(),
             m_joystickPilot::getBButton,
             Pivot.getInstance()::isInhibitingMobility,
+            m_superstructure::isShelfPickupLimiter,
             () -> false
     );
 

@@ -28,6 +28,7 @@ public final class TeleopSwerve extends CommandBase {
     private final DoubleSupplier m_rotation;
     private final BooleanSupplier m_isRobotCentric;
     private final BooleanSupplier m_placing;
+    private final BooleanSupplier m_pickUping;
     private final BooleanSupplier m_useVision;
 
     private final SlewRateLimiter m_translationFilter;
@@ -41,6 +42,7 @@ public final class TeleopSwerve extends CommandBase {
             final DoubleSupplier rotationSup,
             final BooleanSupplier robotCentricSup,
             final BooleanSupplier placementModeSup,
+            final BooleanSupplier pickUpLimiter,
             final BooleanSupplier useVisionSup
     ) {
         m_swerve = swerve;
@@ -51,6 +53,7 @@ public final class TeleopSwerve extends CommandBase {
         m_rotation = rotationSup;
         m_isRobotCentric = robotCentricSup;
         m_placing = placementModeSup;
+        m_pickUping = pickUpLimiter;
         m_useVision = useVisionSup;
 
         m_translationFilter = new SlewRateLimiter(FILTER_SIZE);
@@ -93,12 +96,13 @@ public final class TeleopSwerve extends CommandBase {
         );
 
         final double openLoopRotation = rotationVal * Constants.Swerve.maxAngularVelocity;
-        final var openLoopTranslation = translation.times(Constants.Swerve.maxSpeed).times(m_placing.getAsBoolean() ? 0.25 : 1.0);
+        var openLoopTranslation = translation.times(Constants.Swerve.maxSpeed).times((m_placing.getAsBoolean()) ? 0.25 : 1.0);
+        openLoopTranslation = translation.times(Constants.Swerve.maxSpeed).times((m_pickUping.getAsBoolean()) ? 0.5 : 1.0); //TODO
 
         /* Drive */
         m_swerve.setDrive(
             (DO_VISION_ADJUSTMENT && m_useVision.getAsBoolean()) ? new Translation2d(openLoopTranslation.getX(), visionFeedback) : openLoopTranslation,
-            m_placing.getAsBoolean() && USE_PLACEMENT_FEEDBACK ? placementAngleFeedback : openLoopRotation,
+            (m_placing.getAsBoolean() || m_pickUping.getAsBoolean()) && USE_PLACEMENT_FEEDBACK ? (m_pickUping.getAsBoolean() ? placementAngleFeedback - 180.0 : placementAngleFeedback) : openLoopRotation,
             !m_isRobotCentric.getAsBoolean(),
             true
         );
