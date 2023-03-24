@@ -60,6 +60,7 @@ public final class Superstructure implements Subsystem {
 	private SystemState m_state;
 	private Optional<SuperstructurePose> m_poseGoal;
 	private boolean m_wantsHat;
+	private boolean m_wantHighStow;
 
 	private final Intake m_intake;
 	private final Elevator m_elevator;
@@ -68,8 +69,6 @@ public final class Superstructure implements Subsystem {
 	private final Wrist m_wrist;
 	private final Claw m_claw;
 
-	private boolean m_shelfPickUpLimiter;
-
 	private Superstructure() {
 		m_intake = Intake.getInstance();
 		m_elevator = Elevator.getInstance();
@@ -77,6 +76,8 @@ public final class Superstructure implements Subsystem {
 		m_wrist = Wrist.getInstance();
 		m_pivot = Pivot.getInstance();
 		m_claw = Claw.getInstance();
+		
+		m_wantHighStow = false;
 
 		m_stateChangedTimer = new Timer();
 		m_wantStateChangeTimer = new Timer();
@@ -85,7 +86,6 @@ public final class Superstructure implements Subsystem {
 		m_stateWanted = WantedState.STOWED;
 
 		m_wantsHat = false;
-		m_shelfPickUpLimiter = false;
 		m_poseGoal = Optional.empty();
 	}
 
@@ -119,7 +119,9 @@ public final class Superstructure implements Subsystem {
 	}
 
 	public boolean isShelfPickupLimiter() {
-		return m_shelfPickUpLimiter;
+		return ((m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false)) &&
+				(null == m_claw.getObservedPiece().orElse(null))
+				);
 	}
 	@Override
 	public void periodic() {
@@ -186,11 +188,6 @@ public final class Superstructure implements Subsystem {
 			m_stateChanged = false;
 		}
 
-		//On pickup of peice turn off limiter
-		if(m_shelfPickUpLimiter == true && null != m_claw.getObservedPiece().orElse(null)) {
-			m_shelfPickUpLimiter = false;
-		}
-
 	}
 
 	private SystemState applyWantedState() {
@@ -224,11 +221,13 @@ public final class Superstructure implements Subsystem {
 		}
 
 		m_intake.setState(Intake.State.RETRACTED);
-		m_wrist.setReferencePosition(Wrist.Position.STOWED);
+		//sets wrist to stow when we have and dont have a gamepeice
+		if(m_wantHighStow)
+			m_wrist.setReferencePosition(Wrist.Position.STOWED_HIGH);
+		else
+			m_wrist.setReferencePosition(Wrist.Position.STOWED);
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
 		// m_claw.setIdealStowedGoal();
-
-		m_shelfPickUpLimiter = false; // TODO probaly make this more intentional
 
 		if (m_intake.atReference()) {
 			m_pivot.setReference(Pivot.Position.STOWED);
@@ -280,8 +279,6 @@ public final class Superstructure implements Subsystem {
 		m_wrist.setReferencePosition(Wrist.Position.CLEAR);
 		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
 		m_claw.setGoal(m_poseGoal.map(SuperstructurePose::getClaw).orElse(Claw.Goal.CLOSED));
-
-		m_shelfPickUpLimiter = m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false);
 
 		if (m_wrist.isSafeFromElevatorCollision()
 			&& m_elevator.atReference()
@@ -352,12 +349,18 @@ public final class Superstructure implements Subsystem {
 			if (poseType.map(type -> type == SuperstructurePose.Type.PICKUP).orElse(false)
 				&& m_claw.getObservedPiece().isPresent() && m_claw.getPieceConfidence()
 			) {
+				//goes back to stow after we aquire gamepeice
+
 				// LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF));
+				m_wantHighStow = false; // sets wether we want a low stow
 				setWantedState(WantedState.STOWED);
 				return SystemState.RETURN_TO_CLEAR_ELEVATOR;
 			} else if (poseType.map(type -> type == SuperstructurePose.Type.PLACEMENT).orElse(false)
 						&& m_claw.getObservedPiece().isEmpty()
 			) {
+				//goes abck to stow after we place gamepeice
+
+				m_wantHighStow = true; // sets wether we want to doa high stow
 				setWantedState(WantedState.STOWED);
 				return SystemState.RETURN_TO_CLEAR_ELEVATOR;
 			}

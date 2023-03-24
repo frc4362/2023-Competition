@@ -96,13 +96,36 @@ public final class TeleopSwerve extends CommandBase {
         );
 
         final double openLoopRotation = rotationVal * Constants.Swerve.maxAngularVelocity;
-        var openLoopTranslation = translation.times(Constants.Swerve.maxSpeed).times((m_placing.getAsBoolean()) ? 0.25 : 1.0);
-        openLoopTranslation = translation.times(Constants.Swerve.maxSpeed).times((m_pickUping.getAsBoolean()) ? 0.5 : 1.0); //TODO
+
+        // When placing or doing a pickup we limit how fast we can drive
+        final double limiterRate;
+        if(m_placing.getAsBoolean()) {
+            limiterRate = 0.25;
+        } else if(m_pickUping.getAsBoolean()) {
+            limiterRate = 0.5;
+        } else {
+            limiterRate = 1.0;
+        }
+        final var openLoopTranslation = translation.times(Constants.Swerve.maxSpeed).times(limiterRate);
+
+        /* 
+         * When placing make the robot face the direction it started in
+         * When picking we use the flipped direction
+         * Otherwise we allow normal control of rotation
+         */
+        final double rotationModifier;
+        if(m_placing.getAsBoolean() && USE_PLACEMENT_FEEDBACK) {
+            rotationModifier = placementAngleFeedback;
+        } else if(m_pickUping.getAsBoolean()) {
+            rotationModifier = placementAngleFeedback - 180.0;
+        } else {
+            rotationModifier = openLoopRotation;
+        }
 
         /* Drive */
         m_swerve.setDrive(
             (DO_VISION_ADJUSTMENT && m_useVision.getAsBoolean()) ? new Translation2d(openLoopTranslation.getX(), visionFeedback) : openLoopTranslation,
-            (m_placing.getAsBoolean() || m_pickUping.getAsBoolean()) && USE_PLACEMENT_FEEDBACK ? (m_pickUping.getAsBoolean() ? placementAngleFeedback - 180.0 : placementAngleFeedback) : openLoopRotation,
+            rotationModifier,
             !m_isRobotCentric.getAsBoolean(),
             true
         );
