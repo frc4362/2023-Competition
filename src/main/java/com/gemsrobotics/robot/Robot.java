@@ -44,7 +44,8 @@ public final class Robot extends TimedRobot {
           m_clawCloseButton,
           m_resetFieldOrientationButton,
           m_intakingButton,
-          m_hybridButton;
+          m_hybridButton,
+          m_testIntake;
   public POVButton
           m_shootHighButton,
           m_shootMidButton,
@@ -153,6 +154,16 @@ public final class Robot extends TimedRobot {
       .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
     m_intakingButton.onTrue(intakeCommand);
     m_intakingButton.onFalse(new InstantCommand(intakeCommand::cancel));
+
+    // TODO Test button for intake that does not stop
+    // TODO this MUST be removed before compition
+    m_testIntake = new JoystickButton(m_joystickPilot, XboxController.Button.kX.value);
+    final var intakeOverideCommand = new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING))
+      .andThen(new WaitUntilCommand(() -> false))
+      .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
+    m_testIntake.onTrue(intakeOverideCommand);
+    m_testIntake.onFalse(new InstantCommand(intakeOverideCommand::cancel));
+
 
     m_pilotShootButton = new Trigger(() -> m_joystickPilot.getLeftTriggerAxis() > 0.7);
     m_pilotShootButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.OUTTAKING)));
