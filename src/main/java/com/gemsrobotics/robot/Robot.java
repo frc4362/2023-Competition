@@ -228,7 +228,6 @@ public final class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     m_teleopSwerveCommand.cancel();
-    LimelightHelpers.setLEDMode_ForceOff("");
   }
 
   @Override
@@ -238,6 +237,8 @@ public final class Robot extends TimedRobot {
     } else {
       LEDController.getInstance().ifPresent(controller -> controller.setState(State.OFF));
     }
+
+    LimelightHelpers.setLEDMode_ForceOff("");
   }
 
   /** This autonomous runs the autonomous command selected by your class. */
