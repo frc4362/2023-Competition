@@ -78,7 +78,7 @@ public final class Wrist implements Subsystem {
 		SHELF_PICKUP(-49 / 360.0),
 		CLEAR(-4 / 360.0),
 		STOWED_SHUTOFF(205.0 / 360.0),
-		STOWED_HIGH(-4 / 360.0),
+		STOWED_HIGH(10 / 360.0),
 		STOWED(210.0 / 360.0);
 
 		public final double rotation;

@@ -32,10 +32,10 @@ public class Intake implements Subsystem {
 
 	private static final int DRIVE_MOTOR_ID = 20;
 	private static final String DRIVE_MOTOR_BUS = Constants.CANBusses.MAIN;
-	private static final double kP = 0.022; // 0.018
+	private static final double kP = 0.028; // 0.018
 	private static final double kG = -0.45 / 12.0; // convert to duty cycle
 
-	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(5.0);
+	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(4.0);
 
 	private final TalonFX m_motorPosition;
 	private final TalonFX m_rollerBottom;
@@ -48,27 +48,30 @@ public class Intake implements Subsystem {
 	}
 
 	public enum State {
-		RETRACTED(0, 0.0, 0),
-		BALANCED(9_800, 0.0, 0),
-		MIDDLE(11_000, 0.0, 0), // 25 000
-		EXTENDED(29_850, 0.0, 0),
-		INTAKING(29_850, -0.5, .5), //e 0.05
-		OUTTAKING_HIGH(0, .775, -0.6),
-		OUTTAKING_MID(0, 0.4, -0.35),
-		OUTTAKING_HYBRID(0, 0.15,-0.2),
-		CLEAR_INTAKE(25_000, 0.5, -0.5),
-		CENTER(0, -1.0, 1.0);
+		RETRACTED(0, 0.0, 0, false),
+		BALANCED(9_800, 0.0, 0, false),
+		MIDDLE(11_000, 0.0, 0, false), // 25 000
+		EXTENDED(29_850, 0.0, 0, false),
+		INTAKING(29_850, -0.5, .5, false), //e 0.05
+		OUTTAKING_HIGH(0, .775, -0.6, false),
+		OUTTAKING_MID(0, 0.4, -0.4, true),
+		OUTTAKING_HYBRID(0, 0.25,-0.25, true),
+		OUTTAKING_BOWLING(12_000, 1.0, -1.0, true),
+		CLEAR_INTAKE(25_000, 0.5, -0.5, true),
+		CENTER(0, -1.0, 1.0, false);
 
 		public static final double TICKS_PER_DEGREE = (EXTENDED.ticks - 4_700) / 90.0;
 
 		public final int ticks;
 		public final double topDutyCycle;
 		public final double bottomDutyCycle;
+		public final boolean isOuttake;
 
-		State(final int t, final double d, final double e) {
+		State(final int t, final double d, final double e, final boolean o) {
 			ticks = t;
 			topDutyCycle = d;
 			bottomDutyCycle = e;
+			isOuttake = o;
 		}
 	}
 
@@ -76,7 +79,8 @@ public class Intake implements Subsystem {
 		HIGH(State.OUTTAKING_HIGH),
 		MID(State.OUTTAKING_MID),
 		HYBRID(State.OUTTAKING_HYBRID),
-		CLEAR_INTAKE(State.CLEAR_INTAKE);
+		CLEAR_INTAKE(State.CLEAR_INTAKE),
+		BOWLING(State.OUTTAKING_BOWLING);
 
 		public final State outtakeState;
 
@@ -90,6 +94,7 @@ public class Intake implements Subsystem {
 	private TargetHeight m_height;
 	private final LinearFilter m_filter;
 	private double m_beamAverage;
+	private boolean m_stateChanged;
 
 	private Intake() {
 		final var positionMotor = MotorControllerFactory.createDefaultTalonFX(POSITION_MOTOR_ID, POSITION_MOTOR_BUS);
@@ -100,7 +105,7 @@ public class Intake implements Subsystem {
 		m_motorPosition.config_kP(0, kP);
 		m_motorPosition.config_kI(0, 0.0);
 		m_motorPosition.config_kD(0, 0.0);
-		m_motorPosition.configAllowableClosedloopError(0, State.TICKS_PER_DEGREE * 1.5);
+		m_motorPosition.configAllowableClosedloopError(0, State.TICKS_PER_DEGREE * 0.0);
 		m_motorPosition.configNeutralDeadband(0.06);
 
 		m_motorPosition.configNominalOutputReverse(-0.03);
@@ -129,6 +134,7 @@ public class Intake implements Subsystem {
 
 		m_rollerTop = exhaust.getInternalController();
 
+		m_stateChanged = false;
 		m_beamBreak = new DigitalInput(9);
 		m_beamAverage = 0.0;
 		m_filter = LinearFilter.movingAverage(5);
@@ -148,7 +154,11 @@ public class Intake implements Subsystem {
 
 	public void setState(final State state) {
 		m_mode = Mode.POSITION;
-		m_state = state;
+
+		if (state != m_state) {
+			m_stateChanged = true;
+			m_state = state;
+		}
 	}
 
 	public void setOuttaking() {
@@ -174,7 +184,7 @@ public class Intake implements Subsystem {
 	}
 
 	public boolean atReference() {
-		return Math.abs(m_motorPosition.getClosedLoopError()) < State.TICKS_PER_DEGREE * TOLERANCE.getDegrees();
+		return Math.abs(getError()) < 2000;//State.TICKS_PER_DEGREE * TOLERANCE.getDegrees();
 		// return atReference(TOLERANCE);
 	}
 
@@ -195,8 +205,15 @@ public class Intake implements Subsystem {
 				m_motorPosition.set(
 						ControlMode.Position, m_state.ticks,
 						DemandType.ArbitraryFeedForward, 0/*kG * getApproximateAngle().getCos()*/);
-				m_rollerBottom.set(ControlMode.PercentOutput, m_state.topDutyCycle);
-				m_rollerTop.set(ControlMode.PercentOutput, m_state.bottomDutyCycle);
+
+				if (!m_state.isOuttake || atReference()) {
+					m_rollerBottom.set(ControlMode.PercentOutput, m_state.topDutyCycle);
+					m_rollerTop.set(ControlMode.PercentOutput, m_state.bottomDutyCycle);
+				} else {
+					m_rollerBottom.set(ControlMode.PercentOutput, 0);
+					m_rollerTop.set(ControlMode.PercentOutput, 0);
+				}
+
 				break;
 			case DISABLED:
 			default:
@@ -205,5 +222,7 @@ public class Intake implements Subsystem {
 				m_rollerTop.set(ControlMode.PercentOutput, 0.0);
 				break;
 		}
+
+		m_stateChanged = false;
 	}
 }

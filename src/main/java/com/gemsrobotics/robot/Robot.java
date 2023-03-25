@@ -130,7 +130,7 @@ public final class Robot extends TimedRobot {
 
     m_shootExhaustButton = new POVButton(m_joystickCopilot, 270);
     m_shootExhaustButton.onTrue(Commands.runOnce(
-           () -> Intake.getInstance().setOuttakeType(Intake.TargetHeight.CLEAR_INTAKE)));
+           () -> Intake.getInstance().setOuttakeType(Intake.TargetHeight.BOWLING)));
 
     // m_hatButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
 
@@ -155,14 +155,14 @@ public final class Robot extends TimedRobot {
     m_intakingButton.onTrue(intakeCommand);
     m_intakingButton.onFalse(new InstantCommand(intakeCommand::cancel));
 
-    // TODO Test button for intake that does not stop
-    // TODO this MUST be removed before compition
-    m_testIntake = new JoystickButton(m_joystickPilot, XboxController.Button.kX.value);
-    final var intakeOverideCommand = new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING))
-      .andThen(new WaitUntilCommand(() -> false))
-      .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
-    m_testIntake.onTrue(intakeOverideCommand);
-    m_testIntake.onFalse(new InstantCommand(intakeOverideCommand::cancel));
+//    // TODO Test button for intake that does not stop
+//    // TODO this MUST be removed before compition
+//    m_testIntake = new JoystickButton(m_joystickPilot, XboxController.Button.kX.value);
+//    final var intakeOverideCommand = new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING))
+//      .andThen(new WaitUntilCommand(() -> false))
+//      .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
+//    m_testIntake.onTrue(intakeOverideCommand);
+//    m_testIntake.onFalse(new InstantCommand(intakeOverideCommand::cancel));
 
 
     m_pilotShootButton = new Trigger(() -> m_joystickPilot.getLeftTriggerAxis() > 0.7);
@@ -174,10 +174,11 @@ public final class Robot extends TimedRobot {
             () -> -m_joystickPilot.getLeftY(),
             () -> -m_joystickPilot.getLeftX(),
             () -> -m_joystickPilot.getRightX(),
-            m_joystickPilot::getBButton,
-            Pivot.getInstance()::isInhibitingMobility,
-            m_superstructure::isShelfPickupLimiter,
-            () -> false
+            () -> false,
+            () -> Pivot.getInstance().isInhibitingMobility() || m_joystickPilot.getRightStickButton(),
+            Superstructure.getInstance()::doPickupSlow,
+            m_joystickPilot::getRightStickButton,
+            () -> Constants.Features.DO_EVASION && m_joystickPilot.getRightTriggerAxis() > 0.8
     );
 
     m_autonChooser = new SendableChooser<>();
@@ -216,10 +217,10 @@ public final class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    // Intake.getInstance().log();
+//    Intake.getInstance().log();
 //    Pivot.getInstance().log();
 //    Elevator.getInstance().log();
-    // Wrist.getInstance().log();
+//     Wrist.getInstance().log();
 //    Claw.getInstance().log();
   }
 
@@ -227,6 +228,7 @@ public final class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     m_teleopSwerveCommand.cancel();
+    LimelightHelpers.setLEDMode_ForceOff("");
   }
 
   @Override
@@ -267,12 +269,17 @@ public final class Robot extends TimedRobot {
 
     m_teleopSwerveCommand.schedule();
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
-    LimelightHelpers.setLEDMode_ForceOff("");
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    if (m_joystickPilot.getRightStickButtonPressed()) {
+      LimelightHelpers.setLEDMode_ForceOn("");
+    } else if (m_joystickPilot.getRightStickButtonReleased()) {
+      LimelightHelpers.setLEDMode_ForceOff("");
+    }
+
     if (m_joystickPilot.getStartButtonPressed()) {
       Swerve.getInstance().zeroGyro();
     }

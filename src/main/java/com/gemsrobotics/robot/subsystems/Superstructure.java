@@ -100,6 +100,16 @@ public final class Superstructure implements Subsystem {
 		return m_state;
 	}
 
+	public boolean doPickupSlow() {
+		return m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false)
+				&& m_elevator.getHeightMeters() > 0.15
+				&& m_claw.getObservedPiece().isEmpty();
+	}
+
+	public boolean doPickupYaw() {
+		return m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false);
+	}
+
 	public boolean hasScoringGoal() {
 		return m_poseGoal.isPresent();
 	}
@@ -119,10 +129,10 @@ public final class Superstructure implements Subsystem {
 	}
 
 	public boolean isShelfPickupLimiter() {
-		return ((m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false)) &&
-				(null == m_claw.getObservedPiece().orElse(null))
-				);
+		return ((m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false))
+						&& m_claw.getObservedPiece().isEmpty());
 	}
+
 	@Override
 	public void periodic() {
 		SmartDashboard.putString("Wanted State", m_stateWanted.toString());
@@ -222,10 +232,17 @@ public final class Superstructure implements Subsystem {
 
 		m_intake.setState(Intake.State.RETRACTED);
 		//sets wrist to stow when we have and dont have a gamepeice
-		if(m_wantHighStow)
+		if (m_wantHighStow)
 			m_wrist.setReferencePosition(Wrist.Position.STOWED_HIGH);
 		else
 			m_wrist.setReferencePosition(Wrist.Position.STOWED);
+
+//		if (m_claw.getPieceConfidence()) {
+//			m_wrist.setReferencePosition(Wrist.Position.STOWED_HIGH);
+//		} else {
+//			m_wrist.setReferencePosition(Wrist.Position.STOWED);
+//		}
+
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
 		// m_claw.setIdealStowedGoal();
 
@@ -388,7 +405,11 @@ public final class Superstructure implements Subsystem {
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
 		m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotSafety).orElse(Pivot.Position.RETURNED));
 		m_intake.setState(m_poseGoal.map(SuperstructurePose::getIntake).orElse(Intake.State.RETRACTED));
-		m_wrist.setReferencePosition(Wrist.Position.STOWED);
+
+		if (m_wantHighStow)
+			m_wrist.setReferencePosition(Wrist.Position.STOWED_HIGH);
+		else
+			m_wrist.setReferencePosition(Wrist.Position.STOWED);
 
 		if (m_elevator.atReference() && m_pivot.atReference()) {
 			return SystemState.STOWED;

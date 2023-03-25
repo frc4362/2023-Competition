@@ -38,7 +38,6 @@ public final class Claw implements Subsystem {
 	private static final int CLAW_GRIP_MOTOR_ID = 14;
 	private static final String CLAW_GRIP_MOTOR_BUS = Constants.CANBusses.MAIN;
 
-	private static final double TOLERANCE = 0.05;
 
 	private static final double GEARING_MULTIPLIER = 1.0 / 10.5;
 
@@ -60,12 +59,12 @@ public final class Claw implements Subsystem {
 
 	private Claw() {
 		m_motorDrive = MotorControllerFactory.createDefaultTalonFX(CLAW_DRIVE_MOTOR_ID, CLAW_DRIVE_MOTOR_BUS);
-		m_motorDrive.setInvertedOutput(true);
+		m_motorDrive.setInvertedOutput(false);
 		m_motorDrive.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
 		m_motorDrive.setGearingParameters(GEARING_MULTIPLIER, 1.0);
 
 		m_motorGrip = MotorControllerFactory.createDefaultTalonFX(CLAW_GRIP_MOTOR_ID, CLAW_GRIP_MOTOR_BUS);
-		m_motorGrip.setInvertedOutput(true);
+		m_motorGrip.setInvertedOutput(false);
 		m_motorGrip.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
 		m_motorGrip.setGearingParameters(GEARING_MULTIPLIER, 1.0);
 		m_motorGrip.setOpenLoopVoltageRampRate(0.6);

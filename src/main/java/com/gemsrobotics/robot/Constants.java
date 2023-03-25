@@ -37,6 +37,8 @@ public final class Constants {
 
     public static final class Features {
         public static final boolean DO_VISION_FILTER = false;
+
+        public static final boolean DO_EVASION = true;
     }
 
     public static final CTREConfigs CTRE_CONFIGS = new CTREConfigs();
@@ -52,13 +54,16 @@ public final class Constants {
         public static final double wheelBase = Units.inchesToMeters(22.5); //: This must be tuned to specific robot
         public static final double wheelCircumference = chosenModule.wheelCircumference;
 
+        public static final Translation2d[] moduleTranslations = new Translation2d[]{
+                new Translation2d(wheelBase / 2.0, trackWidth / 2.0),
+                new Translation2d(wheelBase / 2.0, -trackWidth / 2.0),
+                new Translation2d(-wheelBase / 2.0, trackWidth / 2.0),
+                new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0)
+        };
+
         /* Swerve Kinematics 
          * No need to ever change this unless you are not doing a traditional rectangular/square 4 module swerve */
-         public static final SwerveDriveKinematics swerveKinematics = new SwerveDriveKinematics(
-            new Translation2d(wheelBase / 2.0, trackWidth / 2.0),
-            new Translation2d(wheelBase / 2.0, -trackWidth / 2.0),
-            new Translation2d(-wheelBase / 2.0, trackWidth / 2.0),
-            new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0));
+        public static final SwerveDriveKinematics swerveKinematics = new SwerveDriveKinematics(moduleTranslations);
 
         /* Module Gear Ratios */
         public static final double driveGearRatio = chosenModule.driveGearRatio;

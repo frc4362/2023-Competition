@@ -2,6 +2,7 @@ package com.gemsrobotics.robot.subsystems;
 
 import com.ctre.phoenix.sensors.PigeonIMU_StatusFrame;
 import com.gemsrobotics.lib.LimelightHelpers;
+import com.gemsrobotics.lib.util.Translation2dPlus;
 import com.gemsrobotics.robot.SwerveModule;
 import com.gemsrobotics.robot.Constants;
 
@@ -24,12 +25,17 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.signum;
 
 public final class Swerve implements Subsystem {
+    private static final Translation2d[] WHEEL_POSITIONS =
+            Arrays.copyOf(Constants.Swerve.moduleTranslations, Constants.Swerve.moduleTranslations.length);;
+
     private static Swerve INSTANCE;
 
     public static Swerve getInstance() {
@@ -63,13 +69,6 @@ public final class Swerve implements Subsystem {
                 new SwerveModule(2, Constants.Swerve.Mod2.constants),
                 new SwerveModule(3, Constants.Swerve.Mod3.constants)
         );
-
-//        m_swerveModules = List.of(
-//            new SwerveModule(0, Constants.Swerve.Mod2.constants),
-//            new SwerveModule(1, Constants.Swerve.Mod3.constants),
-//            new SwerveModule(2, Constants.Swerve.Mod0.constants),
-//            new SwerveModule(3, Constants.Swerve.Mod1.constants)
-//        );
 
         /* By pausing init for a second before setting module offsets, we avoid a bug with inverting motors.
          * See https://github.com/Team364/BaseFalconSwerve/issues/8 for more info.
@@ -114,26 +113,51 @@ public final class Swerve implements Subsystem {
             final Translation2d translation,
             final double rotation,
             final boolean fieldRelative,
-            final boolean isOpenLoop
+            final boolean isOpenLoop,
+            final boolean isEvading
     ) {
-        SwerveModuleState[] swerveModuleStates =
-            Constants.Swerve.swerveKinematics.toSwerveModuleStates(
-                fieldRelative ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                                    translation.getX(), 
-                                    translation.getY(), 
-                                    rotation, 
-                                    getYaw()
-                                )
-                                : new ChassisSpeeds(
-                                    translation.getX(), 
-                                    translation.getY(), 
-                                    rotation)
-                                );
+        final Translation2d centerOfRotation;
+
+        if (isEvading && fieldRelative) {
+            centerOfRotation = getCenterOfRotation(translation.getAngle(), rotation);
+        } else {
+            centerOfRotation = new Translation2d();
+        }
+
+        final ChassisSpeeds chassisSpeeds;
+
+        if (fieldRelative) {
+            chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                    translation.getX(),
+                    translation.getY(),
+                    rotation,
+                    getYaw()
+            );
+        } else {
+            chassisSpeeds = new ChassisSpeeds(
+                    translation.getX(),
+                    translation.getY(),
+                    rotation
+            );
+        }
+
+        SmartDashboard.putString("CoR", centerOfRotation.toString());
+
+        final var swerveModuleStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(chassisSpeeds, centerOfRotation);
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.maxSpeed);
 
         for (final var mod : m_swerveModules) {
             mod.setDesiredState(swerveModuleStates[mod.moduleNumber], isOpenLoop);
         }
+    }
+
+    public void setDrive(
+            final Translation2d translation,
+            final double rotation,
+            final boolean fieldRelative,
+            final boolean isOpenLoop
+    ) {
+        setDrive(translation, rotation, fieldRelative, isOpenLoop, false);
     }
 
     public void setNeutral() {
@@ -173,6 +197,32 @@ public final class Swerve implements Subsystem {
         return positions;
     }
 
+    private Translation2d getCenterOfRotation(final Rotation2d direction, final double rotation) {
+        final var here = new Translation2dPlus(1.0, direction.minus(getYaw()));
+
+        var cwCenter = WHEEL_POSITIONS[0];
+        var ccwCenter = WHEEL_POSITIONS[WHEEL_POSITIONS.length - 1];
+
+        for (int i = 0; i < WHEEL_POSITIONS.length - 1; i++) {
+            final var cw = WHEEL_POSITIONS[i];
+            final var ccw = WHEEL_POSITIONS[i + 1];
+
+            if (here.isWithinAngle(cw, ccw)) {
+                cwCenter = ccw;
+                ccwCenter = cw;
+            }
+        }
+
+        // if clockwise
+        if (signum(rotation) == 1.0) {
+            return cwCenter;
+        } else if (signum(rotation) == -1.0) {
+            return ccwCenter;
+        } else {
+            return new Translation2d();
+        }
+    }
+
     public void zeroGyro() {
         m_imu.setYaw(0);
     }
@@ -202,16 +252,6 @@ public final class Swerve implements Subsystem {
         for (final var mod : m_swerveModules) {
             mod.resetToAbsolute();
         }
-    }
-
-    public boolean isPivotAllowed() {
-        boolean allowed = true;
-
-        for (final var module : m_swerveModules) {
-            allowed &= (Math.abs(module.getState().speedMetersPerSecond) < (Constants.Swerve.maxSpeed * 5));
-        }
-
-        return allowed;
     }
 
     public Command getTrackingCommand(final PathPlannerTrajectory trajectory, final boolean isFirstPath) {
@@ -245,10 +285,6 @@ public final class Swerve implements Subsystem {
 
     public Command getStopCommand() {
         return runOnce(this::setNeutral);
-    }
-
-    public Command getResetOdometryCommand(final Trajectory trajectory) {
-        return runOnce(() -> resetOdometry(trajectory.getInitialPose()));
     }
 
     public void log() {
