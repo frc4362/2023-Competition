@@ -6,9 +6,7 @@ package com.gemsrobotics.robot;
 
 import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.autos.*;
-import com.gemsrobotics.robot.commands.DriveOntoPlatform;
-import com.gemsrobotics.robot.commands.PlaceCommand;
-import com.gemsrobotics.robot.commands.TeleopSwerve;
+import com.gemsrobotics.robot.commands.*;
 import com.gemsrobotics.robot.subsystems.*;
 import com.gemsrobotics.robot.subsystems.LEDController.State;
 import com.gemsrobotics.robot.subsystems.Superstructure.SystemState;
@@ -149,9 +147,10 @@ public final class Robot extends TimedRobot {
     m_resetFieldOrientationButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
 
     m_intakingButton = new JoystickButton(m_joystickPilot, XboxController.Button.kLeftBumper.value);
-    final var intakeCommand = new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING))
-      .andThen(new WaitUntilCommand(Intake.getInstance()::isBeamBroken))
-      .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
+//    final var intakeCommand = new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING))
+//      .andThen(new WaitUntilCommand(Intake.getInstance()::isBeamBroken))
+//      .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
+    final var intakeCommand = new IntakeUntilCubeCommand(Double.POSITIVE_INFINITY);
     m_intakingButton.onTrue(intakeCommand);
     m_intakingButton.onFalse(new InstantCommand(intakeCommand::cancel));
 
@@ -164,10 +163,12 @@ public final class Robot extends TimedRobot {
 //    m_testIntake.onTrue(intakeOverideCommand);
 //    m_testIntake.onFalse(new InstantCommand(intakeOverideCommand::cancel));
 
-
     m_pilotShootButton = new Trigger(() -> m_joystickPilot.getLeftTriggerAxis() > 0.7);
     m_pilotShootButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.OUTTAKING)));
-    m_pilotShootButton.onFalse(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.STOWED)));
+    m_pilotShootButton.onFalse(new InstantCommand(() -> {
+      Superstructure.getInstance().setWantedState(WantedState.STOWED);
+      Intake.getInstance().setCubeOffsetCleared();
+    }));
     
     m_teleopSwerveCommand = new TeleopSwerve(
             Swerve.getInstance(),
@@ -192,6 +193,10 @@ public final class Robot extends TimedRobot {
     m_autonChooser.addOption("Test placement auto", new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.STARTING))
         .andThen(Claw.getInstance().requestGrab())
         .andThen(new PlaceCommand(SuperstructurePose.AUTON_PLACE)));
+    m_autonChooser.addOption("Test Cube Shoot auto",
+            new CenterOnTagCommand(0.0, () -> new Translation2d(0.0, 0.25))
+              .andThen(new WaitCommand(0.1))
+              .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
 
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
       // .andThen(new WaitUntilCommand(() -> Claw.getInstance().getObservedPiece().isPresent() && Claw.getInstance().getPieceConfidence()))
@@ -276,9 +281,16 @@ public final class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     if (m_joystickPilot.getRightStickButtonPressed()) {
-      LimelightHelpers.setLEDMode_ForceOn("");
+//      if (Claw.getInstance().getObservedPiece().isPresent()) {
+      LimelightHelpers.setPipelineIndex("", 0);
+//      } else {
+//        CommandScheduler.getInstance().schedule(
+//                CenterOnTagCommand.withIntakeRecordedOffset(Translation2d::new)
+//                        .andThen(new WaitCommand(0.1))
+//                        .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
+//      }
     } else if (m_joystickPilot.getRightStickButtonReleased()) {
-      LimelightHelpers.setLEDMode_ForceOff("");
+      LimelightHelpers.setPipelineIndex("", 1);
     }
 
     if (m_joystickPilot.getStartButtonPressed()) {

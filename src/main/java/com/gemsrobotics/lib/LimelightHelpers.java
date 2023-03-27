@@ -240,15 +240,6 @@ class Results {
 	}
 }
 
-class LimelightResults {
-	@JsonProperty("Results")
-	Results targetingResults;
-
-	LimelightResults() {
-		targetingResults = new Results();
-	}
-}
-
 public class LimelightHelpers {
 
 	private static DriverStation.Alliance alliance = null;

@@ -12,6 +12,7 @@ public class ShootCommand extends SequentialCommandGroup {
 				new InstantCommand(() -> Intake.getInstance().setOuttakeType(target)),
 				new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.OUTTAKING)),
 				new WaitCommand(duration),
+				new InstantCommand(Intake.getInstance()::setCubeOffsetCleared),
 				new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.STOWED))
 		);
 	}

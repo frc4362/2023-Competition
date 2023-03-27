@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class Intake implements Subsystem {
 	private static Intake INSTANCE;
@@ -54,6 +55,7 @@ public class Intake implements Subsystem {
 		EXTENDED(29_850, 0.0, 0, false),
 		INTAKING(29_850, -0.5, .5, false), //e 0.05
 		OUTTAKING_HIGH(0, .775, -0.6, false),
+		OUTTAKING_HIGH_AUTO(0, 0.9, -0.8, false),
 		OUTTAKING_MID(0, 0.4, -0.4, true),
 		OUTTAKING_HYBRID(0, 0.25,-0.25, true),
 		OUTTAKING_BOWLING(12_000, 1.0, -1.0, true),
@@ -77,6 +79,7 @@ public class Intake implements Subsystem {
 
 	public enum TargetHeight {
 		HIGH(State.OUTTAKING_HIGH),
+		HIGH_AUTO(State.OUTTAKING_HIGH_AUTO),
 		MID(State.OUTTAKING_MID),
 		HYBRID(State.OUTTAKING_HYBRID),
 		CLEAR_INTAKE(State.CLEAR_INTAKE),
@@ -94,7 +97,7 @@ public class Intake implements Subsystem {
 	private TargetHeight m_height;
 	private final LinearFilter m_filter;
 	private double m_beamAverage;
-	private boolean m_stateChanged;
+	private Optional<Double> m_cubeOffset;
 
 	private Intake() {
 		final var positionMotor = MotorControllerFactory.createDefaultTalonFX(POSITION_MOTOR_ID, POSITION_MOTOR_BUS);
@@ -134,10 +137,10 @@ public class Intake implements Subsystem {
 
 		m_rollerTop = exhaust.getInternalController();
 
-		m_stateChanged = false;
 		m_beamBreak = new DigitalInput(9);
 		m_beamAverage = 0.0;
 		m_filter = LinearFilter.movingAverage(5);
+		m_cubeOffset = Optional.empty();
 
 		m_mode = Mode.DISABLED;
 		m_state = State.RETRACTED;
@@ -156,7 +159,6 @@ public class Intake implements Subsystem {
 		m_mode = Mode.POSITION;
 
 		if (state != m_state) {
-			m_stateChanged = true;
 			m_state = state;
 		}
 	}
@@ -196,8 +198,22 @@ public class Intake implements Subsystem {
 		SmartDashboard.putNumber("Beam Broken", m_beamAverage);
 	}
 
+	public void setCubeOffset(final double offset) {
+		m_cubeOffset = Optional.of(offset);
+	}
+
+	public void setCubeOffsetCleared() {
+		m_cubeOffset = Optional.empty();
+	}
+
+	public Optional<Double> getCubeOffset() {
+		return m_cubeOffset;
+	}
+
 	@Override
 	public void periodic() {
+		SmartDashboard.putNumber("Intake Offset", m_cubeOffset.orElse(0.0));
+
 		m_beamAverage = m_filter.calculate(!m_beamBreak.get() ? 1.0 : 0.0);
 
 		switch (m_mode) {
@@ -222,7 +238,5 @@ public class Intake implements Subsystem {
 				m_rollerTop.set(ControlMode.PercentOutput, 0.0);
 				break;
 		}
-
-		m_stateChanged = false;
 	}
 }

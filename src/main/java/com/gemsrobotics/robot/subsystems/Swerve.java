@@ -17,7 +17,6 @@ import edu.wpi.first.math.kinematics.*;
 
 import com.ctre.phoenix.sensors.Pigeon2;
 
-import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -91,8 +90,8 @@ public final class Swerve implements Subsystem {
                 getModulePositions(),
 //                new Pose2d(new Translation2d(3, 7), Rotation2d.fromDegrees(0)),
                 new Pose2d(new Translation2d(0, 0), Rotation2d.fromDegrees(STARTING_ANGLE)),
-                VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
-                VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10)));
+                VecBuilder.fill(0.02, 0.02, 0.01),
+                VecBuilder.fill(0.1, 0.1, 0.1));
     }
 
     public void setDrivePercent(
@@ -293,6 +292,22 @@ public final class Swerve implements Subsystem {
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
         }
+    }
+
+    public Command getOdometryResetOnVisionCommand() {
+        return runOnce(() -> {
+//            final var result = LimelightHelpers.getLatestResults("").targetingResults;
+
+            LimelightHelpers.getBotpose_wpiAlliance("").map(Pose3d::toPose2d).ifPresent(measurement -> {
+                if (m_swervePoseEstimator.getEstimatedPosition().getTranslation().getDistance(measurement.getTranslation()) < Constants.VISION_OUTLIER_DISTANCE) {
+                    final var imageCaptureTime = LimelightHelpers.getLatency_Cl("") / 1_000.0;
+                    final var imageProcessTime = LimelightHelpers.getLatency_Pipeline("") / 1_000.0;
+                    m_swervePoseEstimator.addVisionMeasurement(
+                            measurement,
+                            Timer.getFPGATimestamp() - (imageCaptureTime + imageProcessTime));
+                }
+            });
+        });
     }
 
     @Override
