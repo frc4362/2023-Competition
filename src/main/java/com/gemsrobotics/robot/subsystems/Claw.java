@@ -9,6 +9,7 @@ import com.gemsrobotics.lib.drivers.MotorController;
 import com.gemsrobotics.lib.drivers.MotorControllerFactory;
 import com.gemsrobotics.robot.Constants;
 
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -57,6 +58,9 @@ public final class Claw implements Subsystem {
 	private boolean m_forceGrip;
 	private double m_lastOpenTime;
 
+	private LinearFilter m_filter;
+	private double m_filterValue;
+
 	private Claw() {
 		m_motorDrive = MotorControllerFactory.createDefaultTalonFX(CLAW_DRIVE_MOTOR_ID, CLAW_DRIVE_MOTOR_BUS);
 		m_motorDrive.setInvertedOutput(false);
@@ -80,6 +84,8 @@ public final class Claw implements Subsystem {
 		m_intakeState = IntakeState.NEUTRAL;
 		m_forceGrip = false;
 		m_lastOpenTime = Double.NEGATIVE_INFINITY;
+
+		m_filter = LinearFilter.movingAverage(5);
 	}
 
 	public enum Goal {
@@ -136,7 +142,8 @@ public final class Claw implements Subsystem {
 	}
 
 	public Optional<ObservedPiece> getObservedPiece() {
-		if (Math.abs(m_motorGrip.getDrawnCurrentAmps()) < PIECE_GRIPPED_THRESHOLD_AMPS) {
+		//if (Math.abs(m_motorGrip.getDrawnCurrentAmps()) < PIECE_GRIPPED_THRESHOLD_AMPS) {
+		if (Math.abs(m_filterValue) < PIECE_GRIPPED_THRESHOLD_AMPS) {
 			return Optional.empty();
 		}
 
@@ -195,6 +202,8 @@ public final class Claw implements Subsystem {
 	@Override
 	public void periodic() {
 		final var observedPiece = getObservedPiece();
+
+		m_filterValue = m_filter.calculate(m_motorGrip.getDrawnCurrentAmps());
 
 		m_motorDrive.setDutyCycle(m_intakeState.dutyCycle);
 
