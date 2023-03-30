@@ -107,7 +107,8 @@ public final class Superstructure implements Subsystem {
 	}
 
 	public boolean doPickupYaw() {
-		return m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false);
+		return m_poseGoal.map(SuperstructurePose::getType).map(type -> type == Type.PICKUP).orElse(false) && 
+			(m_claw.getObservedPiece().isEmpty());
 	}
 
 	public boolean hasScoringGoal() {
