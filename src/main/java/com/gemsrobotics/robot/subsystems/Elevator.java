@@ -87,8 +87,8 @@ public final class Elevator implements Subsystem {
 		TRUE_BOTTOM(0.0),
 		SAFETY_BOTTOM(0.005),
 		FRONT_SAFETY(.1),
-		SHELF_PICKUP(.639),//.645
-		SCORING_MID(0.895),//0.87
+		SHELF_PICKUP(.554),//.639
+		SCORING_MID(0.855),//0.895
 		SCORING_HIGH(1.39),//1.38
 		SAFETY_TOP(1.39),
 		TRUE_TOP(1.39); // meters
