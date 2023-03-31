@@ -104,7 +104,7 @@ public final class TeleopSwerve extends CommandBase {
         // When placing or doing a pickup we limit how fast we can drive
         final double limiterRate;
         if (m_placing.getAsBoolean()) {
-            limiterRate = 0.25;
+            limiterRate = 0.4;//0.25
         } else if (m_pickUping.getAsBoolean()) {
             limiterRate = 0.5;
         } else {
