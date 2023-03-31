@@ -141,6 +141,10 @@ public final class Claw implements Subsystem {
 		return m_motorDrive.getPositionRotations();
 	}
 
+	public boolean isOpening() {
+		return (m_goal == Claw.Goal.OPEN);
+	}
+
 	public Optional<ObservedPiece> getObservedPiece() {
 		//if (Math.abs(m_motorGrip.getDrawnCurrentAmps()) < PIECE_GRIPPED_THRESHOLD_AMPS) {
 		if (Math.abs(m_filterValue) < PIECE_GRIPPED_THRESHOLD_AMPS) {
