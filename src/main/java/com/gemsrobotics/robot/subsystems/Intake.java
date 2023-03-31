@@ -186,7 +186,7 @@ public class Intake implements Subsystem {
 	}
 
 	public boolean atReference() {
-		return Math.abs(getError()) < 2000;//State.TICKS_PER_DEGREE * TOLERANCE.getDegrees();
+		return Math.abs(getError()) < 3000;//2000;//State.TICKS_PER_DEGREE * TOLERANCE.getDegrees();
 		// return atReference(TOLERANCE);
 	}
 
