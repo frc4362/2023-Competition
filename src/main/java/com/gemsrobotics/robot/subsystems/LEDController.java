@@ -36,7 +36,7 @@ public final class LEDController implements Subsystem {
 		CANdleConfiguration configAll = new CANdleConfiguration();
 		configAll.statusLedOffWhenActive = true;
 		configAll.disableWhenLOS = false;
-		configAll.stripType = CANdle.LEDStripType.BRG;
+		configAll.stripType = CANdle.LEDStripType.GRB;
 		configAll.brightnessScalar = 1.0;
 		configAll.vBatOutputMode = CANdle.VBatOutputMode.Off;
 		m_candle.configAllSettings(configAll, 100);
@@ -58,9 +58,9 @@ public final class LEDController implements Subsystem {
 
 	public enum State {
 		OFF(Color.kBlack),
-		WANTS_CONE(Color.kTeal),
-		WANTS_SHELF_CUBE(Color.kYellow),
-		WANTS_CUBE(Color.kPurple),
+		WANTS_CONE(Color.kPurple),//RB gets RG
+		WANTS_SHELF_CUBE(Color.kTeal),//B gets B
+		WANTS_CUBE(Color.kYellow),//RG gets 
 		IDLE(Color.kGreen);
 
 		public final Color color;

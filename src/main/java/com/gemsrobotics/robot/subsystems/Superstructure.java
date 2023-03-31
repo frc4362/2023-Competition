@@ -369,12 +369,12 @@ public final class Superstructure implements Subsystem {
 			) {
 				//goes back to stow after we aquire gamepeice
 
-				// LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF));
+				LEDController.getInstance().ifPresent(controller -> controller.setState(LEDController.State.OFF));
 				m_wantHighStow = false; // sets wether we want a low stow
 				setWantedState(WantedState.STOWED);
 				return SystemState.RETURN_TO_CLEAR_ELEVATOR;
 			} else if (poseType.map(type -> type == SuperstructurePose.Type.PLACEMENT).orElse(false)
-						&& m_claw.getObservedPiece().isEmpty()
+						&& m_claw.isOpening()//m_claw.getObservedPiece().isEmpty()
 			) {
 				//goes abck to stow after we place gamepeice
 
