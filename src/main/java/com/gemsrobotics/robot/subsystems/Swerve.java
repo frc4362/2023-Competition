@@ -298,14 +298,18 @@ public final class Swerve implements Subsystem {
         return runOnce(() -> {
 //            final var result = LimelightHelpers.getLatestResults("").targetingResults;
 
-            LimelightHelpers.getBotpose_wpiAlliance("").map(Pose3d::toPose2d).ifPresent(measurement -> {
-                if (m_swervePoseEstimator.getEstimatedPosition().getTranslation().getDistance(measurement.getTranslation()) < Constants.VISION_OUTLIER_DISTANCE) {
-                    final var imageCaptureTime = LimelightHelpers.getLatency_Cl("") / 1_000.0;
-                    final var imageProcessTime = LimelightHelpers.getLatency_Pipeline("") / 1_000.0;
-                    m_swervePoseEstimator.addVisionMeasurement(
-                            measurement,
-                            Timer.getFPGATimestamp() - (imageCaptureTime + imageProcessTime));
-                }
+            LimelightHelpers.getBotpose_wpiAlliance("").map(Pose3d::toPose2d).ifPresentOrElse(measurement -> {
+//                if (m_swervePoseEstimator.getEstimatedPosition().getTranslation().getDistance(measurement.getTranslation()) < Constants.VISION_OUTLIER_DISTANCE) {
+                    final var imageCaptureTime = LimelightHelpers.getLatency_Cl("");
+                    final var imageProcessTime = LimelightHelpers.getLatency_Pipeline("");
+                    m_swervePoseEstimator.resetPosition(getYaw(), getModulePositions(), measurement);
+//                    m_swervePoseEstimator.addVisionMeasurement(
+//                            measurement,
+//                            Timer.getFPGATimestamp() - ((imageCaptureTime + imageProcessTime) / 1_000));
+                    SmartDashboard.putString("Relocalized", "Success");
+//                }
+            }, () -> {
+                SmartDashboard.putString("Relocalized", "No measure");
             });
         });
     }
@@ -321,17 +325,17 @@ public final class Swerve implements Subsystem {
         // pose estimation
         m_swervePoseEstimator.updateWithTime(Timer.getFPGATimestamp(), getYaw(), getModulePositions());
 
-        if (Constants.Features.DO_VISION_FILTER) {
-            LimelightHelpers.getBotpose_wpiAlliance("").map(Pose3d::toPose2d).ifPresent(measurement -> {
-                if (m_swervePoseEstimator.getEstimatedPosition().getTranslation().getDistance(measurement.getTranslation()) < Constants.VISION_OUTLIER_DISTANCE) {
-                    final var imageCaptureTime = LimelightHelpers.getLatency_Cl("") / 1_000.0;
-                    final var imageProcessTime = LimelightHelpers.getLatency_Pipeline("") / 1_000.0;
-                    m_swervePoseEstimator.addVisionMeasurement(
-                            measurement,
-                            Timer.getFPGATimestamp() - (imageCaptureTime + imageProcessTime));
-                }
-            });
-        }
+//        if (Constants.Features.DO_VISION_FILTER) {
+//            LimelightHelpers.getBotpose_wpiAlliance("").map(Pose3d::toPose2d).ifPresent(measurement -> {
+//                if (m_swervePoseEstimator.getEstimatedPosition().getTranslation().getDistance(measurement.getTranslation()) < Constants.VISION_OUTLIER_DISTANCE) {
+//                    final var imageCaptureTime = LimelightHelpers.getLatency_Cl("") / 1_000.0;
+//                    final var imageProcessTime = LimelightHelpers.getLatency_Pipeline("") / 1_000.0;
+//                    m_swervePoseEstimator.addVisionMeasurement(
+//                            measurement,
+//                            Timer.getFPGATimestamp() - (imageCaptureTime + imageProcessTime));
+//                }
+//            });
+//        }
 
         // TODO does this even show up on the map at all lol
 //        final var FIELD = new Translation2d(15.980, 8.21);

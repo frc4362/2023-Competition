@@ -197,10 +197,12 @@ public final class Robot extends TimedRobot {
             new CenterOnTagCommand(0.0, () -> new Translation2d(0.0, 0.25))
               .andThen(new WaitCommand(0.1))
               .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
+    m_autonChooser.addOption("AprilTag localization test", Swerve.getInstance().getOdometryResetOnVisionCommand());
 
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
       // .andThen(new WaitUntilCommand(() -> Claw.getInstance().getObservedPiece().isPresent() && Claw.getInstance().getPieceConfidence()))
     SmartDashboard.putData(m_autonChooser);
+    SmartDashboard.putString("Relocalized", "Not yet");
 
 //    SmartDashboard.putNumber(PIVOT_KEY, Pivot.Position.STARTING.rotation.getDegrees());
 //    SmartDashboard.putNumber(ELEVATOR_KEY, 0.0);
@@ -224,7 +226,7 @@ public final class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 //    Intake.getInstance().log();
 //    Pivot.getInstance().log();
-//    Elevator.getInstance().log();
+    Elevator.getInstance().log();
 //     Wrist.getInstance().log();
 //    Claw.getInstance().log();
   }
@@ -250,12 +252,12 @@ public final class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     // schedule the autonomous command (example)
+    LimelightHelpers.setAlliance(DriverStation.getAlliance());
+
     m_autonomousCommand = m_autonChooser.getSelected();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
-
-    LimelightHelpers.setAlliance(DriverStation.getAlliance());
   }
 
   /** This function is called periodically during autonomous. */

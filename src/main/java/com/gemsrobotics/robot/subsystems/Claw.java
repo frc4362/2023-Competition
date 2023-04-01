@@ -164,6 +164,10 @@ public final class Claw implements Subsystem {
 		return m_pieceTimer.get() > PIECE_DETECTION_TIME;
 	}
 
+	public double getPieceHoldDuration() {
+		return m_pieceTimer.get();
+	}
+
 	public void setIdealStowedGoal() {
 		if (DriverStation.isAutonomous() || (getObservedPiece().isPresent() && getPieceConfidence())) {
 			setGoal(Goal.GRIPPING);

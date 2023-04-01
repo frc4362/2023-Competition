@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 class LimelightTarget_Retro {
 
@@ -268,7 +269,7 @@ public class LimelightHelpers {
 				new Rotation3d(Units.degreesToRadians(raw[3]), Units.degreesToRadians(raw[4]), Units.degreesToRadians(raw[5])));
 	}
 
-	public static Optional<Pose3d> maybeMakePose3d(final double raw[]) {
+	public static Optional<Pose3d> maybeMakePose3d(final double[] raw) {
 		if (raw.length > 0) {
 			return Optional.of(makePose3d(raw));
 		} else {
@@ -362,6 +363,7 @@ public class LimelightHelpers {
 	}
 
 	public static Optional<Pose3d> getBotpose_wpiAlliance(final String limelightName) {
+		SmartDashboard.putString("Seen alliance", Optional.ofNullable(alliance).map(DriverStation.Alliance::toString).orElse("Null"));
 		if (alliance == DriverStation.Alliance.Red) {
 			return getBotpose_wpiRed(limelightName);
 		} else if (alliance == DriverStation.Alliance.Blue) {

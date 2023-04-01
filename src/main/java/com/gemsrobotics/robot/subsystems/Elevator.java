@@ -39,15 +39,14 @@ public final class Elevator implements Subsystem {
 	private static final double TOLERANCE_METERS = 0.1;
 	public static final double GEARING_MULTIPLIER = 1.0 / 9.0;
 
-	public static final double OUTPUT_VOLTS = 10;
+	public static final double OUTPUT_VOLTS = 12;
 	public static final double
 		kS = 0.15,
 		kG = 0.66;
 
-	private final MotorController<TalonFX> m_motor;
+	public final MotorController<TalonFX> m_motor;
 	private final PIDController m_controller;
 
-	private final SlewRateLimiter m_filter;
 	private double m_referenceMeters;
 	private Rotation2d m_externalAngle;
 
@@ -56,7 +55,7 @@ public final class Elevator implements Subsystem {
 		m_motor.setInvertedOutput(false);
 		m_motor.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
 		// TODO
-		m_motor.setOpenLoopVoltageRampRate(0.2);
+		m_motor.setOpenLoopVoltageRampRate(0.05);
 
 		m_motor.getInternalController().configNeutralDeadband(0.01);
 		m_motor.getInternalController().configPeakOutputForward(1.0);
@@ -74,9 +73,7 @@ public final class Elevator implements Subsystem {
 		m_motor.setGearingParameters(GEARING_MULTIPLIER, Units.inches2Meters(4.0*2)/(2.0*Math.PI));
 
 		// 142.7
-		m_controller = new PIDController(12.2, 0.0, 0.0);
-
-		m_filter = new SlewRateLimiter(5);
+		m_controller = new PIDController(24.4, 0.0, 0.0);
 
 		m_referenceMeters = Position.SAFETY_BOTTOM.extensionMeters;
 		m_externalAngle = Rotation2d.fromDegrees(90);
@@ -147,7 +144,9 @@ public final class Elevator implements Subsystem {
 		SmartDashboard.putNumber("Elevator Extension", getHeightMeters());
 		SmartDashboard.putNumber("Elevator Reference", m_referenceMeters);
 		// SmartDashboard.putNumber("Elevator Angle", m_externalAngle.getDegrees());
-		// SmartDashboard.putNumber("Elevator Control Effort", m_motor.getVoltageOutput());
+//		final var feedback = m_controller.calculate(getHeightMeters(), m_referenceMeters);
+//		final var limitedFeedback = MathUtils.coerce(-OUTPUT_VOLTS, feedback, OUTPUT_VOLTS);
+//		 SmartDashboard.putNumber("Elevator Control Effort", m_motor.getInternalController().getMotorOutputVoltage());
 		// SmartDashboard.putNumber("Elevator Raw Measurement", m_motor.getInternalController().getSelectedSensorPosition());
 		SmartDashboard.putNumber("Elevator AtRef", atReference() ? 1.0 : 0.0);
 	}
@@ -157,6 +156,12 @@ public final class Elevator implements Subsystem {
 		final var error = abs(getHeightMeters() - m_referenceMeters);
 		final var feedback = m_controller.calculate(getHeightMeters(), m_referenceMeters);
 		final var limitedFeedback = MathUtils.coerce(-OUTPUT_VOLTS, feedback, OUTPUT_VOLTS);
+
+//		SmartDashboard.putNumber("Elevator Feedback", feedback);
+//		SmartDashboard.putNumber("Elevator Feedforward", kG * m_externalAngle.getSin() + kS * signum(limitedFeedback));
+
+		SmartDashboard.putNumber("Total Elevator Effort", limitedFeedback + kG * m_externalAngle.getSin() + kS * signum(limitedFeedback));
+
 		m_motor.setVoltage(limitedFeedback, kG * m_externalAngle.getSin() + kS * signum(limitedFeedback));
 	}
 }

@@ -354,9 +354,14 @@ public final class Superstructure implements Subsystem {
 				wristPosition = m_poseGoal.get().getWrist();
 			}
 
+			final var isMid = m_poseGoal
+				  .map(SuperstructurePose::getElevator)
+				  .map(height -> height == Elevator.Position.SCORING_MID)
+				  .orElse(false);
+
 			m_wrist.setReferencePosition(wristPosition);
 			m_pivot.setReference(m_wantsHat && observedPiece == Claw.ObservedPiece.CONE
-								 ? Pivot.Position.HATTING : m_poseGoal.get().getPivotGoal());
+								 ? (isMid ? Position.HATTING_MID : Position.HATTING_HIGH) : m_poseGoal.get().getPivotGoal());
 		} else {
 			m_wrist.setReferencePosition(m_poseGoal.map(SuperstructurePose::getWrist).orElse(Wrist.Position.CLEAR));
 			m_pivot.setReference(m_poseGoal.map(SuperstructurePose::getPivotGoal).orElse(Position.SHELF_PICKUP));
