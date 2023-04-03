@@ -10,7 +10,7 @@ public class IntakeUntilCubeCommand extends SequentialCommandGroup {
 
 	public IntakeUntilCubeCommand(final double timeout) {
 		addCommands(
-				new InstantCommand(() -> LimelightHelpers.setPipelineIndex("", 2)),
+//				new InstantCommand(() -> LimelightHelpers.setPipelineIndex("", 2)),
 				new WantedStateCommand(Superstructure.WantedState.INTAKING),
 				new RunCommand(() -> Intake.getInstance().setCubeOffset(LimelightHelpers.getTX("")))
 						.until(Intake.getInstance()::isBeamBroken)

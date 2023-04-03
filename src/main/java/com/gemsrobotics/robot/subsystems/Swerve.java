@@ -1,7 +1,9 @@
 package com.gemsrobotics.robot.subsystems;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.sensors.PigeonIMU_StatusFrame;
 import com.gemsrobotics.lib.LimelightHelpers;
+import com.gemsrobotics.lib.drivers.MotorController;
 import com.gemsrobotics.lib.util.Translation2dPlus;
 import com.gemsrobotics.robot.SwerveModule;
 import com.gemsrobotics.robot.Constants;
@@ -284,6 +286,12 @@ public final class Swerve implements Subsystem {
 
     public Command getStopCommand() {
         return runOnce(this::setNeutral);
+    }
+
+    public void setNeutralMode(final NeutralMode neutral) {
+        for (final var mod : m_swerveModules) {
+            mod.setNeutral(neutral);
+        }
     }
 
     public void log() {

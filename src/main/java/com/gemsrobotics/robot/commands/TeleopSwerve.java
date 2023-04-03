@@ -13,6 +13,7 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
@@ -36,6 +37,8 @@ public final class TeleopSwerve extends CommandBase {
     private final SlewRateLimiter m_translationFilter;
     private final SlewRateLimiter m_strafeFilter;
     private final SlewRateLimiter m_rotationFilter;
+
+    private double m_startPickupTime;
 
     public TeleopSwerve(
             final Swerve swerve,
@@ -63,10 +66,16 @@ public final class TeleopSwerve extends CommandBase {
         m_translationFilter = new SlewRateLimiter(FILTER_SIZE);
         m_strafeFilter = new SlewRateLimiter(FILTER_SIZE);
         m_rotationFilter = new SlewRateLimiter(FILTER_SIZE);
+
+        m_startPickupTime = 0.0;
     }
 
     @Override
     public void execute() {
+        if (m_pickUping.getAsBoolean()) {
+            m_startPickupTime = Timer.getFPGATimestamp();
+        }
+
         /* Get Values, Deadband*/
         double translationVal = MathUtil.applyDeadband(m_translation.getAsDouble(), Constants.stickDeadband);
         double strafeVal = MathUtil.applyDeadband(m_strafe.getAsDouble(), Constants.stickDeadband);
@@ -94,11 +103,6 @@ public final class TeleopSwerve extends CommandBase {
 		final double visionError = LimelightHelpers.getTX("");
         final double visionFeedback = VISION_kP * visionError;
 
-//        final double placementAngleFeedback = Constants.Generation.thetaController.calculate(
-//            m_swerve.getYaw().getRadians(),
-//            Units.degrees2Rads(180)
-//        );
-
         final double openLoopRotation = rotationVal * Constants.Swerve.maxAngularVelocity;
 
         // When placing or doing a pickup we limit how fast we can drive
@@ -106,7 +110,7 @@ public final class TeleopSwerve extends CommandBase {
         if (m_placing.getAsBoolean()) {
             limiterRate = 0.4;//0.25
         } else if (m_pickUping.getAsBoolean()) {
-            limiterRate = 0.5;
+            limiterRate = 0.5;//MathUtil.clamp(1.0 - (Timer.getFPGATimestamp() - m_startPickupTime), 0.5, 1.0);
         } else {
             limiterRate = 1.0;
         }

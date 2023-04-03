@@ -57,8 +57,8 @@ public class Intake implements Subsystem {
 		OUTTAKING_HIGH(0, .775, -0.6, false),
 		OUTTAKING_HIGH_AUTO(0, 0.9, -0.8, false),
 		OUTTAKING_MID(0, 0.4, -0.4, true),
-		OUTTAKING_HYBRID(0, 0.25,-0.25, true),
-		OUTTAKING_BOWLING(12_000, 1.0, -1.0, true),
+		OUTTAKING_HYBRID(15_000, 0.15,-0.15, true),
+		OUTTAKING_BOWLING(25_000, 1.0, -1.0, true),
 		CLEAR_INTAKE(25_000, 0.5, -0.5, true),
 		CENTER(0, -1.0, 1.0, false);
 
@@ -109,7 +109,7 @@ public class Intake implements Subsystem {
 		m_motorPosition.config_kI(0, 0.0);
 		m_motorPosition.config_kD(0, 0.0);
 		m_motorPosition.configAllowableClosedloopError(0, State.TICKS_PER_DEGREE * 0.0);
-		m_motorPosition.configNeutralDeadband(0.06);
+		m_motorPosition.configNeutralDeadband(0.035);
 
 		m_motorPosition.configNominalOutputReverse(-0.03);
 		m_motorPosition.configNominalOutputForward(0.03);

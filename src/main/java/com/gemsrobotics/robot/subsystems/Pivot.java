@@ -71,12 +71,12 @@ public class Pivot implements Subsystem {
 	public enum Position {
 		STARTING(Rotation2d.fromDegrees(54)),
 		STOWED(Rotation2d.fromDegrees(54)),
-		RETURNED(Rotation2d.fromDegrees(62)),
+		RETURNED(Rotation2d.fromDegrees(65)),
 		SHELF_PICKUP(Rotation2d.fromDegrees(54)),
 		SCORING(Rotation2d.fromDegrees(40.5)),
-		AUTON_SCORING(Rotation2d.fromDegrees(40.5)),
+		AUTON_SCORING(Rotation2d.fromDegrees(38.5)),
 		HATTING_HIGH(Rotation2d.fromDegrees(33.5)),
-		HATTING_MID(Rotation2d.fromDegrees(32.5));
+		HATTING_MID(Rotation2d.fromDegrees(30.5));
 
 		public final Rotation2d rotation;
 
@@ -126,6 +126,6 @@ public class Pivot implements Subsystem {
 	public void periodic() {
 		final var ff = m_feedforward.calculate(getAngle().getRadians(), 0.0);
 		final var feedback = m_controllerPivot.calculate(getAngle().getRadians(), m_reference.getRadians());
-		m_motor.setVoltage(MathUtils.coerce(-9, feedback, 9), ff);
+		m_motor.setVoltage(MathUtils.coerce(-12, feedback, 12), ff);
 	}
 }

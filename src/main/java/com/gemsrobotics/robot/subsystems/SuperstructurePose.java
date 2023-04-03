@@ -36,7 +36,7 @@ public final class SuperstructurePose {
         Type.PLACEMENT,
         Pivot.Position.AUTON_SCORING,
         Wrist.Position.SCORING_HIGH,
-        Elevator.Position.SCORING_HIGH,
+        Position.AUTON_SCORING_HIGH,
         Claw.Goal.CLOSED
     );
 

@@ -14,8 +14,8 @@ public class DriveOntoPlatform extends SequentialCommandGroup {
 		addCommands(
 				new InstantCommand(() -> swerve.setDrivePercent(direction, 0, true, true)),
 				swerve.waitForPitchAround(Rotation2d.fromDegrees(Math.copySign(13.0, pitchMultiplier))),
-				new WaitCommand(0.2),
-				swerve.getStopCommand(),
+//				new WaitCommand(0.2),
+//				swerve.getStopCommand(),
 				new InstantCommand(() ->
 			      swerve.setDrivePercent(slowD, 0, true, true)),
 				swerve.waitForPitchAround(Rotation2d.fromDegrees(Math.copySign(8, pitchMultiplier)), 3),

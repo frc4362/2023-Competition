@@ -200,44 +200,9 @@ public final class Constants {
         public static final double maxCentripetalAcceleration = 3.0;
 
         static {
-//            configForward.addConstraint(new CentripetalAccelerationConstraint(maxCentripetalAcceleration));
-//            configBackward.addConstraint(new CentripetalAccelerationConstraint(maxCentripetalAcceleration));
             thetaController.enableContinuousInput(-Math.PI, Math.PI);
             pureThetaController.enableContinuousInput(-Math.PI, Math.PI);
         }
 
-//        public static Trajectory getForwardTrajectory(
-//                final Pose2d starterPose,
-//                final List<Translation2d> poses,
-//                final Pose2d endPose
-//        ) {
-//            return TrajectoryGenerator.generateTrajectory(
-//                    starterPose,
-//                    poses,
-//                    endPose,
-//                    configForward
-//            );
-//        }
-
-//        public static Trajectory getForwardTrajectory(final Pose2d starterPose, final Pose2d endPose) {
-//            return getForwardTrajectory(starterPose, List.of(), endPose);
-//        }
-//
-//        public static Trajectory getBackwardTrajectory(
-//                final Pose2d starterPose,
-//                final List<Translation2d> poses,
-//                final Pose2d endPose
-//        ) {
-//            return TrajectoryGenerator.generateTrajectory(
-//                    starterPose,
-//                    poses,
-//                    endPose,
-//                    configBackward
-//            );
-//        }
-//
-//        public static Trajectory getBackwardTrajectory(final Pose2d starterPose, final Pose2d endPose) {
-//            return getBackwardTrajectory(starterPose, List.of(), endPose);
-//        }
     }
 }

@@ -1,5 +1,6 @@
 package com.gemsrobotics.robot.subsystems;
 
+import com.ctre.phoenix.CANifier;
 import com.ctre.phoenix.led.*;
 import com.gemsrobotics.robot.Constants;
 import edu.wpi.first.wpilibj.util.Color;
@@ -27,10 +28,12 @@ public final class LEDController implements Subsystem {
 	private static final String CANDLE_BUS = Constants.CANBusses.MAIN;
 	private final Command m_pulseRedCommand;
 	private final CANdle m_candle;
+//	private final CANifier m_canifier;
 
 	private State m_state;
 
 	private LEDController() {
+//		m_canifier = new CANifier(CANDLE_ID);
 		m_candle = new CANdle(CANDLE_ID, CANDLE_BUS);
 
 		CANdleConfiguration configAll = new CANdleConfiguration();
@@ -61,7 +64,7 @@ public final class LEDController implements Subsystem {
 		WANTS_CONE(Color.kPurple),//RB gets RG
 		WANTS_SHELF_CUBE(Color.kTeal),//B gets B
 		WANTS_CUBE(Color.kYellow),//RG gets 
-		IDLE(Color.kGreen);
+		IDLE(Color.kRed);
 
 		public final Color color;
 
@@ -75,7 +78,10 @@ public final class LEDController implements Subsystem {
 	}
 
 	private void setLEDs(final Color color) {
-		m_candle.setLEDs((int) (color.blue * 255), (int) (color.red * 255), (int) (color.green * 255));
+		m_candle.setLEDs((int) (color.red * 255), (int) (color.green * 255), (int) (color.blue * 255));
+//		m_canifier.setLEDOutput(color.red, CANifier.LEDChannel.LEDChannelA);
+//		m_canifier.setLEDOutput(color.green, CANifier.LEDChannel.LEDChannelB);
+//		m_canifier.setLEDOutput(color.blue, CANifier.LEDChannel.LEDChannelC);
 	}
 
 	private void conformToState() {

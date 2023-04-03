@@ -1,5 +1,7 @@
 package com.gemsrobotics.robot;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.gemsrobotics.lib.drivers.MotorController;
 import com.gemsrobotics.lib.drivers.MotorControllerFactory;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -74,6 +76,10 @@ public class SwerveModule {
         
         mAngleMotor.set(ControlMode.Position, Conversions.degreesToFalcon(angle.getDegrees(), Constants.Swerve.angleGearRatio));
         lastAngle = angle;
+    }
+
+    public void setNeutral(final NeutralMode neutralMode) {
+        mDriveMotor.setNeutralMode(neutralMode);
     }
 
     private Rotation2d getAngle(){

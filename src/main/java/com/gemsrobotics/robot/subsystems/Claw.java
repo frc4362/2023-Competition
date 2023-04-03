@@ -13,10 +13,9 @@ import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
+import edu.wpi.first.wpilibj2.command.*;
+
+import javax.management.InstanceAlreadyExistsException;
 
 public final class Claw implements Subsystem {
 	private static Claw INSTANCE = null;
@@ -29,7 +28,7 @@ public final class Claw implements Subsystem {
 		return INSTANCE;
 	}
 
-	private static final double CONE_THRESHOLD_ROTATIONS = -.3;
+	private static final double CONE_THRESHOLD_ROTATIONS = -.275;
 	private static final double PIECE_DETECTION_TIME = 0.25;
 	private static final int PIECE_GRIPPED_THRESHOLD_AMPS = 35;
 	private static final double NOTHING_THRESHOLD_ROTATIONS = -.387;
@@ -153,11 +152,15 @@ public final class Claw implements Subsystem {
 
 		if (m_motorGrip.getPositionRotations() < NOTHING_THRESHOLD_ROTATIONS) {
 			return Optional.empty();
-		} else if (m_motorGrip.getPositionRotations() < CONE_THRESHOLD_ROTATIONS) {
-			return Optional.of(ObservedPiece.CONE);
 		} else {
-			return Optional.of(ObservedPiece.CUBE);
+			return Optional.of(ObservedPiece.CONE);
 		}
+
+//		if (m_motorGrip.getPositionRotations() < CONE_THRESHOLD_ROTATIONS) {
+//			return Optional.of(ObservedPiece.CONE);
+//		} else {
+//			return Optional.of(ObservedPiece.CUBE);
+//		}
 	}
 
 	public boolean getPieceConfidence() {
@@ -183,7 +186,7 @@ public final class Claw implements Subsystem {
 	}
 
 	public Command requestGrab() {
-		return runOnce(
+		return new InstantCommand(
 				() -> {
 					setGoal(Goal.GRIPPING);
 					setForceGrip(true);

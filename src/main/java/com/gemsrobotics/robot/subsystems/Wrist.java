@@ -51,7 +51,7 @@ public final class Wrist implements Subsystem {
 		m_motor.setOpenLoopVoltageRampRate(0.25);
 		m_motor.setNeutralBehaviour(MotorController.NeutralBehaviour.BRAKE);
 		m_motor.setGearingParameters(GEARING_MULTIPLIER, 1.0);
-		m_motor.getInternalController().configNeutralDeadband(0.04);
+		m_motor.getInternalController().configNeutralDeadband(0.03);
 
 		// m_motor.getInternalController().configNominalOutputForward(GEARING_MULTIPLIER);
 

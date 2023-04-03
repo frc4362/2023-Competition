@@ -87,6 +87,7 @@ public final class Elevator implements Subsystem {
 		SHELF_PICKUP(.620),//.554//.639
 		SCORING_MID(0.855),//0.895
 		SCORING_HIGH(1.39),//1.38
+		AUTON_SCORING_HIGH(1.37),//1.38
 		SAFETY_TOP(1.39),
 		TRUE_TOP(1.39); // meters
 
@@ -156,11 +157,6 @@ public final class Elevator implements Subsystem {
 		final var error = abs(getHeightMeters() - m_referenceMeters);
 		final var feedback = m_controller.calculate(getHeightMeters(), m_referenceMeters);
 		final var limitedFeedback = MathUtils.coerce(-OUTPUT_VOLTS, feedback, OUTPUT_VOLTS);
-
-//		SmartDashboard.putNumber("Elevator Feedback", feedback);
-//		SmartDashboard.putNumber("Elevator Feedforward", kG * m_externalAngle.getSin() + kS * signum(limitedFeedback));
-
-		SmartDashboard.putNumber("Total Elevator Effort", limitedFeedback + kG * m_externalAngle.getSin() + kS * signum(limitedFeedback));
 
 		m_motor.setVoltage(limitedFeedback, kG * m_externalAngle.getSin() + kS * signum(limitedFeedback));
 	}

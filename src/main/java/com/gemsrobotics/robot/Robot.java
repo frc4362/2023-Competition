@@ -4,6 +4,7 @@
 
 package com.gemsrobotics.robot;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.autos.*;
 import com.gemsrobotics.robot.commands.*;
@@ -13,7 +14,6 @@ import com.gemsrobotics.robot.subsystems.Superstructure.SystemState;
 import com.gemsrobotics.robot.subsystems.Superstructure.WantedState;
 
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
@@ -186,28 +186,25 @@ public final class Robot extends TimedRobot {
     m_autonChooser.addOption("None", new WaitCommand(1.0));
     m_autonChooser.addOption("Auto balance auton", new BalanceAuto(Swerve.getInstance()));
     m_autonChooser.addOption("Two.5 auton", new TwoAndBalanceAuto());
-    m_autonChooser.addOption("Three auton", new ThreeAuto());
-    m_autonChooser.addOption("Straight auton", new DriveStraightAuton());
-    m_autonChooser.addOption("Test auto", new DriveOntoPlatform(Swerve.getInstance(), new Translation2d(-.35, 0.0), .15)
-        .andThen(Swerve.getInstance().getStopCommand()));
-    m_autonChooser.addOption("Test placement auto", new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.STARTING))
-        .andThen(Claw.getInstance().requestGrab())
-        .andThen(new PlaceCommand(SuperstructurePose.AUTON_PLACE)));
-    m_autonChooser.addOption("Test Cube Shoot auto",
-            new CenterOnTagCommand(0.0, () -> new Translation2d(0.0, 0.25))
-              .andThen(new WaitCommand(0.1))
-              .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
+    m_autonChooser.addOption("Three and balance auton", new ThreeAndBalanceAuto());
+    m_autonChooser.addOption("Three and middle auton", new ThreeAndMidAuto());
+    m_autonChooser.addOption("Cable auton", new ThreeCableAuto());
+//    m_autonChooser.addOption("Straight auton", new DriveStraightAuton());
+//    m_autonChooser.addOption("Test auto", new DriveOntoPlatform(Swerve.getInstance(), new Translation2d(-.35, 0.0), .15)
+//        .andThen(Swerve.getInstance().getStopCommand()));
+//    m_autonChooser.addOption("Test placement auto", new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.STARTING))
+//        .andThen(Claw.getInstance().requestGrab())
+//        .andThen(new PlaceCommand(SuperstructurePose.AUTON_PLACE)));
+//    m_autonChooser.addOption("Test Cube Shoot auto",
+//            new CenterOnTagCommand(0.0, () -> new Translation2d(0.0, 0.25))
+//              .andThen(new WaitCommand(0.1))
+//              .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
     m_autonChooser.addOption("AprilTag localization test", Swerve.getInstance().getOdometryResetOnVisionCommand());
 
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
       // .andThen(new WaitUntilCommand(() -> Claw.getInstance().getObservedPiece().isPresent() && Claw.getInstance().getPieceConfidence()))
     SmartDashboard.putData(m_autonChooser);
     SmartDashboard.putString("Relocalized", "Not yet");
-
-//    SmartDashboard.putNumber(PIVOT_KEY, Pivot.Position.STARTING.rotation.getDegrees());
-//    SmartDashboard.putNumber(ELEVATOR_KEY, 0.0);
-//    SmartDashboard.putNumber(INTAKE_KEY, 0.0);
-//    SmartDashboard.putNumber(WRIST_KEY, Wrist.STARTING_ANGLE_FROM_ELEVATOR.getDegrees());
   }
 
   /**
@@ -226,9 +223,9 @@ public final class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 //    Intake.getInstance().log();
 //    Pivot.getInstance().log();
-    Elevator.getInstance().log();
+//    Elevator.getInstance().log();
 //     Wrist.getInstance().log();
-//    Claw.getInstance().log();
+    Claw.getInstance().log();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -277,20 +274,17 @@ public final class Robot extends TimedRobot {
 
     m_teleopSwerveCommand.schedule();
     LimelightHelpers.setAlliance(DriverStation.getAlliance());
+    LimelightHelpers.setLEDMode_PipelineControl("");
+    LimelightHelpers.setPipelineIndex("", 1);
+
+    Swerve.getInstance().setNeutralMode(NeutralMode.Brake);
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
     if (m_joystickPilot.getRightStickButtonPressed()) {
-//      if (Claw.getInstance().getObservedPiece().isPresent()) {
       LimelightHelpers.setPipelineIndex("", 0);
-//      } else {
-//        CommandScheduler.getInstance().schedule(
-//                CenterOnTagCommand.withIntakeRecordedOffset(Translation2d::new)
-//                        .andThen(new WaitCommand(0.1))
-//                        .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
-//      }
     } else if (m_joystickPilot.getRightStickButtonReleased()) {
       LimelightHelpers.setPipelineIndex("", 1);
     }
