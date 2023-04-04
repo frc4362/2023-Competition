@@ -61,9 +61,9 @@ public final class LEDController implements Subsystem {
 
 	public enum State {
 		OFF(Color.kBlack),
-		WANTS_CONE(Color.kPurple),//RB gets RG
-		WANTS_SHELF_CUBE(Color.kTeal),//B gets B
-		WANTS_CUBE(Color.kYellow),//RG gets 
+		WANTS_CONE(Color.kPurple),
+		WANTS_SHELF_CUBE(Color.kTeal),
+		WANTS_CUBE(Color.kYellow),
 		IDLE(Color.kRed);
 
 		public final Color color;
