@@ -58,7 +58,7 @@ public class Intake implements Subsystem {
 		OUTTAKING_HIGH_AUTO(0, 0.9, -0.8, false),
 		OUTTAKING_MID(0, 0.4, -0.4, true),
 		OUTTAKING_HYBRID(15_000, 0.15,-0.15, true),
-		OUTTAKING_BOWLING(25_000, 1.0, -1.0, true),
+		OUTTAKING_BOWLING(7_000, 1.0, -1.0, true),
 		CLEAR_INTAKE(25_000, 0.5, -0.5, true),
 		CENTER(0, -1.0, 1.0, false);
 
@@ -169,6 +169,10 @@ public class Intake implements Subsystem {
 
 	public void setOuttakeType(final TargetHeight height) {
 		m_height = height;
+	}
+
+	public boolean isTargetHybridOrBowling() {
+		return (m_height==Intake.TargetHeight.HYBRID || m_height==Intake.TargetHeight.BOWLING);
 	}
 
 	public Rotation2d getApproximateAngle() {

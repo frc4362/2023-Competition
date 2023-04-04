@@ -432,7 +432,12 @@ public final class Superstructure implements Subsystem {
 	}
 
 	private SystemState handleOuttaking() {
-		m_pivot.setReference(Position.STOWED);
+		//Make sure we stay on kickstands when intake does not move
+		if(m_intake.isTargetHybridOrBowling()) {
+			m_pivot.setReference(Position.RETURNED);
+		} else {
+			m_pivot.setReference(Position.STOWED);
+		}
 		m_intake.setOuttaking();
 
 		return applyWantedState();
