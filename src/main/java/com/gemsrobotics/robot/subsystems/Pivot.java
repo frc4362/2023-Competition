@@ -74,7 +74,7 @@ public class Pivot implements Subsystem {
 		RETURNED(Rotation2d.fromDegrees(65)),
 		SHELF_PICKUP(Rotation2d.fromDegrees(54)),
 		SCORING(Rotation2d.fromDegrees(40.5)),
-		AUTON_SCORING(Rotation2d.fromDegrees(38.5)),
+		AUTON_SCORING(Rotation2d.fromDegrees(39.5)),
 		HATTING_HIGH(Rotation2d.fromDegrees(33.5)),
 		HATTING_MID(Rotation2d.fromDegrees(30.5));
 
@@ -93,7 +93,7 @@ public class Pivot implements Subsystem {
 		setReference(setpoint.rotation);
 	}
 
-		public Rotation2d getAngle() {
+	public Rotation2d getAngle() {
 		return Rotation2d.fromRotations(m_motor.getPositionRotations()).rotateBy(Position.STARTING.rotation);
 	}
 
@@ -120,6 +120,10 @@ public class Pivot implements Subsystem {
 		// SmartDashboard.putNumber("Pivot Velocity", m_motor.getVelocityAngularRadiansPerSecond());
 		// SmartDashboard.putNumber("Pivot Error", getErrorDegrees());
 		SmartDashboard.putNumber("Pivot AtRef", atReference() ? 1.0 : 0.0);
+	}
+
+	public void scrubSetpoint(final double rateDegrees) {
+		m_reference = m_reference.plus(Rotation2d.fromDegrees(rateDegrees));
 	}
 
 	@Override

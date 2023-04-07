@@ -26,7 +26,6 @@ public final class LEDController implements Subsystem {
 
 	private static final int CANDLE_ID = 30;
 	private static final String CANDLE_BUS = Constants.CANBusses.MAIN;
-	private final Command m_pulseRedCommand;
 	private final CANdle m_candle;
 //	private final CANifier m_canifier;
 
@@ -44,17 +43,6 @@ public final class LEDController implements Subsystem {
 		configAll.vBatOutputMode = CANdle.VBatOutputMode.Off;
 		m_candle.configAllSettings(configAll, 100);
 		m_candle.clearAnimation(0);
-
-		m_pulseRedCommand = runOnce(() -> setLEDs(Color.kRed))
-									.andThen(new WaitCommand(0.2))
-									.andThen(() -> setLEDs(Color.kBlack))
-									.andThen(new WaitCommand(0.2))
-									.andThen(() -> setLEDs(Color.kRed))
-									.andThen(new WaitCommand(0.2))
-									.andThen(() -> setLEDs(Color.kBlack))
-									.andThen(new WaitCommand(0.2))
-									.andThen(() -> setLEDs(Color.kRed))
-									.andThen(new WaitCommand(0.2));
 
 		m_state = State.OFF;
 	}
@@ -79,9 +67,6 @@ public final class LEDController implements Subsystem {
 
 	private void setLEDs(final Color color) {
 		m_candle.setLEDs((int) (color.red * 255), (int) (color.green * 255), (int) (color.blue * 255));
-//		m_canifier.setLEDOutput(color.red, CANifier.LEDChannel.LEDChannelA);
-//		m_canifier.setLEDOutput(color.green, CANifier.LEDChannel.LEDChannelB);
-//		m_canifier.setLEDOutput(color.blue, CANifier.LEDChannel.LEDChannelC);
 	}
 
 	private void conformToState() {
@@ -93,8 +78,41 @@ public final class LEDController implements Subsystem {
 		return run(this::conformToState);
 	}
 
-	public void requestPulseRed() {
-		m_pulseRedCommand.schedule();
+	public Command requestPulseCommand(final Color color) {
+		return runOnce(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(Color.kBlack))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(Color.kBlack))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(Color.kBlack))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(Color.kBlack))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(Color.kBlack))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(Color.kBlack))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(Color.kBlack))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(Color.kBlack))
+			.andThen(new WaitCommand(0.1))
+			.andThen(() -> setLEDs(color))
+			.andThen(new WaitCommand(0.1));
 	}
 
 	@Override

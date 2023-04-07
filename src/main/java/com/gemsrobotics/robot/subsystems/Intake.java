@@ -53,10 +53,10 @@ public class Intake implements Subsystem {
 		BALANCED(9_800, 0.0, 0, false),
 		MIDDLE(11_000, 0.0, 0, false), // 25 000
 		EXTENDED(29_850, 0.0, 0, false),
-		INTAKING(29_850, -0.5, .5, false), //e 0.05
+		INTAKING(29_850, -0.4, .4, false), //e 0.05
 		OUTTAKING_HIGH(0, .775, -0.6, false),
 		OUTTAKING_HIGH_AUTO(0, 0.9, -0.8, false),
-		OUTTAKING_MID(0, 0.4, -0.4, true),
+		OUTTAKING_MID(0, 0.475, -0.475, true),
 		OUTTAKING_HYBRID(15_000, 0.15,-0.15, true),
 		OUTTAKING_BOWLING(7_000, 1.0, -1.0, true),
 		CLEAR_INTAKE(25_000, 0.5, -0.5, true),
@@ -214,8 +214,13 @@ public class Intake implements Subsystem {
 		return m_cubeOffset;
 	}
 
+	public State getState() {
+		return m_state;
+	}
+
 	@Override
 	public void periodic() {
+		SmartDashboard.putNumber("Beam Broken", m_beamAverage);
 		SmartDashboard.putNumber("Intake Offset", m_cubeOffset.orElse(0.0));
 
 		m_beamAverage = m_filter.calculate(!m_beamBreak.get() ? 1.0 : 0.0);

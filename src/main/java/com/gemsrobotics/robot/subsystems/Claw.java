@@ -13,6 +13,7 @@ import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.*;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -195,9 +196,15 @@ public final class Claw implements Subsystem {
 			    .andThen(new WaitUntilCommand(() -> getObservedPiece().isPresent() && getPieceConfidence())
 								.raceWith(new WaitCommand(2.5).andThen(() -> {
 									setGoal(Goal.OPEN);
-									// LEDController.getInstance().ifPresent(LEDController::requestPulseRed);
 								})))
-			    .finallyDo(interrupted -> setIntakeState(IntakeState.NEUTRAL));
+			    .finallyDo(interrupted -> {
+					setIntakeState(IntakeState.NEUTRAL);
+
+					if (getObservedPiece().isPresent()) {
+						LEDController.getInstance().map(controller -> controller.requestPulseCommand(Color.kYellow))
+												   .ifPresent(Command::schedule);
+					}
+				});
 	}
 
 	public void log() {

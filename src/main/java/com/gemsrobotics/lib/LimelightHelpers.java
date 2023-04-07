@@ -182,6 +182,16 @@ class LimelightTarget_Detector {
 	}
 }
 
+class LimelightResults {
+	@JsonProperty("Results")
+	public Results targetingResults;
+
+	LimelightResults() {
+		targetingResults = new Results();
+	}
+}
+
+
 class Results {
 
 	@JsonProperty("pID")

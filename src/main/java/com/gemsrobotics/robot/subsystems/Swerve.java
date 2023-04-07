@@ -241,7 +241,6 @@ public final class Swerve implements Subsystem {
     }
 
     public Command waitForPitchAround(final Rotation2d targetPitch, final double tolerance) {
-
         return new WaitUntilCommand(() -> (abs(getPitch().minus(targetPitch).getDegrees())) < tolerance);
     }
 
@@ -292,6 +291,17 @@ public final class Swerve implements Subsystem {
         for (final var mod : m_swerveModules) {
             mod.setNeutral(neutral);
         }
+    }
+
+    
+    public void setWheelLock() {
+        setModuleStates(new SwerveModuleState[] {
+                new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
+                new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
+                new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
+                new SwerveModuleState(0, Rotation2d.fromDegrees(45))
+            }
+        );   
     }
 
     public void log() {

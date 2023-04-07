@@ -9,11 +9,14 @@ import com.gemsrobotics.lib.LimelightHelpers;
 import com.gemsrobotics.robot.autos.*;
 import com.gemsrobotics.robot.commands.*;
 import com.gemsrobotics.robot.subsystems.*;
+import com.gemsrobotics.robot.subsystems.Intake.TargetHeight;
 import com.gemsrobotics.robot.subsystems.LEDController.State;
 import com.gemsrobotics.robot.subsystems.Superstructure.SystemState;
 import com.gemsrobotics.robot.subsystems.Superstructure.WantedState;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
@@ -48,7 +51,8 @@ public final class Robot extends TimedRobot {
           m_shootHighButton,
           m_shootMidButton,
           m_shootHybridButton,
-          m_shootExhaustButton;
+          m_shootExhaustButton,
+          m_clearIntakeButton;
 
   private SendableChooser<Command> m_autonChooser;
   private Command m_teleopSwerveCommand, m_autonomousCommand;
@@ -139,6 +143,9 @@ public final class Robot extends TimedRobot {
     // pilot controls
     m_joystickPilot = new XboxController(Constants.PILOT_PORT);
 
+    m_clearIntakeButton = new POVButton(m_joystickPilot, 0);
+    m_clearIntakeButton.onTrue(Commands.runOnce(() -> Intake.getInstance().setOuttakeType(TargetHeight.CLEAR_INTAKE)));
+
     m_clawCloseButton = new JoystickButton(m_joystickPilot, XboxController.Button.kRightBumper.value);
     m_clawCloseButton.debounce(1., Debouncer.DebounceType.kRising);
     m_clawCloseButton.onTrue(Claw.getInstance().requestGrab());
@@ -154,7 +161,7 @@ public final class Robot extends TimedRobot {
     m_intakingButton.onTrue(intakeCommand);
     m_intakingButton.onFalse(new InstantCommand(intakeCommand::cancel));
 
-    m_pilotShootButton = new Trigger(() -> m_joystickPilot.getLeftTriggerAxis() > 0.7);
+    m_pilotShootButton = new Trigger(() -> m_joystickPilot.getLeftTriggerAxis() > 0.9);
     m_pilotShootButton.onTrue(new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.OUTTAKING)));
     m_pilotShootButton.onFalse(new InstantCommand(() -> {
       Superstructure.getInstance().setWantedState(WantedState.STOWED);
@@ -170,26 +177,29 @@ public final class Robot extends TimedRobot {
             () -> Pivot.getInstance().isInhibitingMobility() || m_joystickPilot.getRightStickButton(),
             Superstructure.getInstance()::doPickupSlow,
             m_joystickPilot::getRightStickButton,
-            () -> Constants.Features.DO_EVASION && m_joystickPilot.getRightTriggerAxis() > 0.8
+            () -> Constants.Features.DO_EVASION && m_joystickPilot.getRightTriggerAxis() > 0.8,
+            () -> {
+              return m_joystickPilot.getLeftTriggerAxis() > 0.3 
+                && (Intake.getInstance().getState() == Intake.State.OUTTAKING_MID || Intake.getInstance().getState() == Intake.State.OUTTAKING_HIGH);
+            }
     );
 
     m_autonChooser = new SendableChooser<>();
     m_autonChooser.addOption("None", new WaitCommand(1.0));
     m_autonChooser.addOption("Auto balance auton", new BalanceAuto(Swerve.getInstance()));
-    m_autonChooser.addOption("Two.5 auton", new TwoAndBalanceAuto());
-    m_autonChooser.addOption("Three and balance auton", new ThreeAndBalanceAuto());
+    // m_autonChooser.addOption("Two.5 auton", new TwoAndBalanceAuto());
+    m_autonChooser.addOption("Three and balance auton", new AutoTimedWheelLock(new ThreeAndBalanceAuto(), 14.9));
     m_autonChooser.addOption("Three and middle auton", new ThreeAndMidAuto());
     m_autonChooser.addOption("Cable auton", new ThreeCableAuto());
 //    m_autonChooser.addOption("Straight auton", new DriveStraightAuton());
-//    m_autonChooser.addOption("Test auto", new DriveOntoPlatform(Swerve.getInstance(), new Translation2d(-.35, 0.0), .15)
-//        .andThen(Swerve.getInstance().getStopCommand()));
+   m_autonChooser.addOption("Test balance auto", new FeedbackBalanceCommand());
 //    m_autonChooser.addOption("Test placement auto", new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.STARTING))
 //        .andThen(Claw.getInstance().requestGrab())
 //        .andThen(new PlaceCommand(SuperstructurePose.AUTON_PLACE)));
-//    m_autonChooser.addOption("Test Cube Shoot auto",
-//            new CenterOnTagCommand(0.0, () -> new Translation2d(0.0, 0.25))
-//              .andThen(new WaitCommand(0.1))
-//              .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
+   m_autonChooser.addOption("Test Cube Shoot auto",
+           new CenterOnTagCommand(0.0, () -> new Translation2d(0.0, 0.0))
+             .andThen(new WaitCommand(0.1))
+             .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
     m_autonChooser.addOption("AprilTag localization test", Swerve.getInstance().getOdometryResetOnVisionCommand());
 
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
@@ -292,6 +302,11 @@ public final class Robot extends TimedRobot {
       LEDController.getInstance().ifPresent(controller -> controller.setState(State.WANTS_CONE));
     } else if (m_joystickCopilot.getBackButton()) {
       LEDController.getInstance().ifPresent(controller -> controller.setState(State.WANTS_SHELF_CUBE));
+    }
+
+    final var pivotScrub = MathUtil.applyDeadband(-m_joystickCopilot.getLeftY(), 0.8);
+    if (pivotScrub != 0) {
+      Pivot.getInstance().scrubSetpoint(pivotScrub * 10.0 / 50.0);
     }
   }
 }

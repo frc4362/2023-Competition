@@ -2,6 +2,7 @@ package com.gemsrobotics.robot.autos;
 
 import com.gemsrobotics.robot.Constants;
 import com.gemsrobotics.robot.commands.DriveOntoPlatform;
+import com.gemsrobotics.robot.commands.FeedbackBalanceCommand;
 import com.gemsrobotics.robot.commands.IntakeUntilCubeCommand;
 import com.gemsrobotics.robot.commands.PlaceCommand;
 import com.gemsrobotics.robot.commands.ShootCommand;
@@ -28,9 +29,6 @@ public class TwoAndBalanceAuto extends SequentialCommandGroup {
 						new WaitCommand(0.1).andThen(Swerve.getInstance().getTrackingCommand(path2, false)),
 						new WaitCommand(1.25).andThen(new IntakeUntilCubeCommand(3.0))
 				),
-//				new DriveOntoPlatform(Swerve.getInstance(), new Translation2d(-.35, 0.0), .15),
-//				new InstantCommand(() -> Swerve.getInstance().setDrivePercent(new Translation2d(0, 0), 0.25, true, true)),
-//				new WaitCommand(0.25),
 				Swerve.getInstance().getStopCommand()
 		);
 	}

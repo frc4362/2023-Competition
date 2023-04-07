@@ -47,6 +47,7 @@ public final class Superstructure implements Subsystem {
 		RETURN_TO_CLEAR_ELEVATOR,
 		RETURN_TO_CLEAR_PIVOT,
 		HYBRID_PLACEMENT,
+		RIGHTING,
 
 		// intaking states
 		INTAKING,
@@ -226,8 +227,10 @@ public final class Superstructure implements Subsystem {
 		return SystemState.IDLE;
 	}
 
+	boolean hasControlledPivotInStowed = false;
 	private SystemState handleStowed() {
 		if (m_stateChanged) {
+			hasControlledPivotInStowed = false;
 			setGoalPoseCleared();
 		}
 
@@ -238,17 +241,11 @@ public final class Superstructure implements Subsystem {
 		else
 			m_wrist.setReferencePosition(Wrist.Position.STOWED);
 
-//		if (m_claw.getPieceConfidence()) {
-//			m_wrist.setReferencePosition(Wrist.Position.STOWED_HIGH);
-//		} else {
-//			m_wrist.setReferencePosition(Wrist.Position.STOWED);
-//		}
-
 		m_elevator.setReference(Elevator.Position.SAFETY_BOTTOM);
-		// m_claw.setIdealStowedGoal();
 
-		if (m_intake.atReference()) {
+		if (m_intake.atReference() && !hasControlledPivotInStowed) {
 			m_pivot.setReference(Pivot.Position.STOWED);
+			hasControlledPivotInStowed = true;
 		}
 
 		return applyWantedState();

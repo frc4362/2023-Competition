@@ -33,6 +33,7 @@ public final class TeleopSwerve extends CommandBase {
     private final BooleanSupplier m_pickUping;
     private final BooleanSupplier m_useVision;
     private final BooleanSupplier m_doEvasionSup;
+    private final BooleanSupplier m_doCubeYawLock;
 
     private final SlewRateLimiter m_translationFilter;
     private final SlewRateLimiter m_strafeFilter;
@@ -49,7 +50,8 @@ public final class TeleopSwerve extends CommandBase {
             final BooleanSupplier placementModeSup,
             final BooleanSupplier pickUpLimiter,
             final BooleanSupplier useVisionSup,
-            final BooleanSupplier doEvasionSup
+            final BooleanSupplier doEvasionSup,
+            final BooleanSupplier doCubeYawLock
     ) {
         m_swerve = swerve;
         addRequirements(swerve);
@@ -62,6 +64,7 @@ public final class TeleopSwerve extends CommandBase {
         m_pickUping = pickUpLimiter;
         m_useVision = useVisionSup;
         m_doEvasionSup = doEvasionSup;
+        m_doCubeYawLock = doCubeYawLock;
 
         m_translationFilter = new SlewRateLimiter(FILTER_SIZE);
         m_strafeFilter = new SlewRateLimiter(FILTER_SIZE);
@@ -128,7 +131,7 @@ public final class TeleopSwerve extends CommandBase {
                     m_swerve.getYaw().getRadians(),
                     Units.degrees2Rads(0)
             );
-        } else if (m_placing.getAsBoolean() && USE_PLACEMENT_FEEDBACK) {
+        } else if (m_placing.getAsBoolean() || m_doCubeYawLock.getAsBoolean()) {
             rotationModifier = Constants.Generation.pureThetaController.calculate(
                     m_swerve.getYaw().getRadians(),
                     Units.degrees2Rads(180)
