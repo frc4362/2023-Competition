@@ -51,12 +51,12 @@ public class Intake implements Subsystem {
 	public enum State {
 		RETRACTED(0, 0.0, 0, false),
 		BALANCED(9_800, 0.0, 0, false),
-		MIDDLE(11_000, 0.0, 0, false), // 25 000
+		MIDDLE(13_000, 0.0, 0, false), // 25 000
 		EXTENDED(29_850, 0.0, 0, false),
 		INTAKING(29_850, -0.4, .4, false), //e 0.05
-		OUTTAKING_HIGH(0, .775, -0.6, false),
+		OUTTAKING_HIGH(0, .825, -0.67, false),
 		OUTTAKING_HIGH_AUTO(0, 0.9, -0.8, false),
-		OUTTAKING_MID(0, 0.475, -0.475, true),
+		OUTTAKING_MID(0, 0.5, -0.5, true),
 		OUTTAKING_HYBRID(15_000, 0.15,-0.15, true),
 		OUTTAKING_BOWLING(7_000, 1.0, -1.0, true),
 		CLEAR_INTAKE(25_000, 0.5, -0.5, true),

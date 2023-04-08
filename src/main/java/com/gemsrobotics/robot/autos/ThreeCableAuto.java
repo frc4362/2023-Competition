@@ -34,14 +34,14 @@ public class ThreeCableAuto extends SequentialCommandGroup {
 						new WaitCommand(2.00).andThen(Swerve.getInstance().getTrackingCommand(path, true))
 				),
 				Swerve.getInstance().getStopCommand(),
-				new CenterOnTagCommand(6.0 * getAllianceMultiplier(), allianceBasedStrafe),
+				new CenterOnTagCommand(this::getAllianceOffset, allianceBasedStrafe),
 				Swerve.getInstance().getOdometryResetOnVisionCommand(),
 				new ShootCommand(Intake.TargetHeight.HIGH, 0.25),
 				new ParallelCommandGroup(
 						new WaitCommand(2.00).andThen(new IntakeUntilCubeCommand(3.0)),
 						Swerve.getInstance().getTrackingCommand(path2, false)
 				),
-				new CenterOnTagCommand(6.0 * getAllianceMultiplier(), allianceBasedStrafe),
+				new CenterOnTagCommand(this::getAllianceOffset, allianceBasedStrafe),
 				new ShootCommand(Intake.TargetHeight.MID, 0.25),
 				Swerve.getInstance().getStopCommand()
 		);
@@ -49,5 +49,13 @@ public class ThreeCableAuto extends SequentialCommandGroup {
 
 	private double getAllianceMultiplier() {
 		return (DriverStation.getAlliance() == Alliance.Red ? -1.0 : 1.0);
+	}
+
+	private double getAllianceOffset() {
+		if (DriverStation.getAlliance() == Alliance.Red) {
+			return -6.0;
+		} else {
+			return 6.0;
+		}
 	}
 }

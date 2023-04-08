@@ -197,7 +197,7 @@ public final class Robot extends TimedRobot {
 //        .andThen(Claw.getInstance().requestGrab())
 //        .andThen(new PlaceCommand(SuperstructurePose.AUTON_PLACE)));
    m_autonChooser.addOption("Test Cube Shoot auto",
-           new CenterOnTagCommand(0.0, () -> new Translation2d(0.0, 0.0))
+           new CenterOnTagCommand(() -> 0.0, () -> new Translation2d(0.0, 0.0))
              .andThen(new WaitCommand(0.1))
              .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
     m_autonChooser.addOption("AprilTag localization test", Swerve.getInstance().getOdometryResetOnVisionCommand());

@@ -40,6 +40,14 @@ public final class SuperstructurePose {
         Claw.Goal.CLOSED
     );
 
+    public static final SuperstructurePose AUTON_PLACE_BLUE_STATES = new SuperstructurePose(
+        Type.PLACEMENT,
+        Pivot.Position.AUTON_SCORING_BLUE_STATES,
+        Wrist.Position.SCORING_HIGH,
+        Position.AUTON_SCORING_HIGH_BLUE,
+        Claw.Goal.CLOSED
+    );
+
     private final Type m_type;
     private final Pivot.Position m_rotationPivot;
     private final Wrist.Position m_rotationWrist;

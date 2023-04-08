@@ -20,11 +20,11 @@ public class CenterOnTagCommand extends SequentialCommandGroup {
 	// meters per second per degree
 	private final static double kP = 1.0 / 300.0;
 
-	private final double m_offset;
+	private final Supplier<Double> m_offset;
 
-	public CenterOnTagCommand(final double offset, final Supplier<Translation2d> initialVelocity) {
+	public CenterOnTagCommand(final Supplier<Double> offsetSup, final Supplier<Translation2d> initialVelocity) {
 		addRequirements(Swerve.getInstance());
-		m_offset = offset;
+		m_offset = offsetSup;
 		addCommands(
 				new InstantCommand(() -> LimelightHelpers.setPipelineIndex("", 1)),
 				new RunCommand(() -> Swerve.getInstance().setDrivePercent(initialVelocity.get(), 0.0, true, true))
@@ -45,10 +45,10 @@ public class CenterOnTagCommand extends SequentialCommandGroup {
 	}
 
 	public static CenterOnTagCommand withIntakeRecordedOffset(final Supplier<Translation2d> initialVelocity) {
-		return new CenterOnTagCommand(Intake.getInstance().getCubeOffset().orElse(0.0), initialVelocity);
+		return new CenterOnTagCommand(() -> Intake.getInstance().getCubeOffset().orElse(0.0), initialVelocity);
 	}
 
 	private double getError() {
-		return LimelightHelpers.getTX("") - m_offset;
+		return LimelightHelpers.getTX("") - m_offset.get();
 	}
 }
