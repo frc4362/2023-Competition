@@ -54,9 +54,9 @@ public class Intake implements Subsystem {
 		MIDDLE(13_000, 0.0, 0, false), // 25 000
 		EXTENDED(29_850, 0.0, 0, false),
 		INTAKING(29_850, -0.4, .4, false), //e 0.05
-		OUTTAKING_HIGH(0, .825, -0.67, false),
+		OUTTAKING_HIGH(0, .74, -0.59, false),
 		OUTTAKING_HIGH_AUTO(0, 0.9, -0.8, false),
-		OUTTAKING_MID(0, 0.5, -0.5, true),
+		OUTTAKING_MID(0, 0.32, -0.36, true),
 		OUTTAKING_HYBRID(15_000, 0.15,-0.15, true),
 		OUTTAKING_BOWLING(7_000, 1.0, -1.0, true),
 		CLEAR_INTAKE(25_000, 0.5, -0.5, true),

@@ -16,8 +16,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.*;
 
-import javax.management.InstanceAlreadyExistsException;
-
 public final class Claw implements Subsystem {
 	private static Claw INSTANCE = null;
 
@@ -156,12 +154,12 @@ public final class Claw implements Subsystem {
 		} else {
 			return Optional.of(ObservedPiece.CONE);
 		}
-
-//		if (m_motorGrip.getPositionRotations() < CONE_THRESHOLD_ROTATIONS) {
-//			return Optional.of(ObservedPiece.CONE);
-//		} else {
-//			return Optional.of(ObservedPiece.CUBE);
-//		}
+		
+		// if (m_motorGrip.getPositionRotations() < CONE_THRESHOLD_ROTATIONS) {
+		// 	return Optional.of(ObservedPiece.CONE);
+		// } else {
+		// 	return Optional.of(ObservedPiece.CUBE);
+		// }
 	}
 
 	public boolean getPieceConfidence() {
@@ -200,8 +198,11 @@ public final class Claw implements Subsystem {
 			    .finallyDo(interrupted -> {
 					setIntakeState(IntakeState.NEUTRAL);
 
-					if (getObservedPiece().isPresent()) {
+					if (getObservedPiece().map(piece -> piece == ObservedPiece.CONE).orElse(false)) {
 						LEDController.getInstance().map(controller -> controller.requestPulseCommand(Color.kYellow))
+												   .ifPresent(Command::schedule);
+					} else if (getObservedPiece().map(piece -> piece == ObservedPiece.CUBE).orElse(false)) {
+						LEDController.getInstance().map(controller -> controller.requestPulseCommand(Color.kTeal))
 												   .ifPresent(Command::schedule);
 					}
 				});
