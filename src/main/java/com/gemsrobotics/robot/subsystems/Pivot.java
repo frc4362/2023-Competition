@@ -69,15 +69,15 @@ public class Pivot implements Subsystem {
 
 	// Angles are positive coming up out of the ground
 	public enum Position {
-		STARTING(Rotation2d.fromDegrees(54)),
-		STOWED(Rotation2d.fromDegrees(54)),
-		RETURNED(Rotation2d.fromDegrees(65)),
-		SHELF_PICKUP(Rotation2d.fromDegrees(54)),
-		SCORING(Rotation2d.fromDegrees(40.5)),
-		AUTON_SCORING(Rotation2d.fromDegrees(39.5)),
-		AUTON_SCORING_BLUE_STATES(Rotation2d.fromDegrees(39.5)),
-		HATTING_HIGH(Rotation2d.fromDegrees(33.5)),
-		HATTING_MID(Rotation2d.fromDegrees(30.5));
+		STARTING(					Rotation2d.fromDegrees(54)),
+		STOWED(						Rotation2d.fromDegrees(54)),
+		RETURNED(					Rotation2d.fromDegrees(65)),
+		SHELF_PICKUP(				Rotation2d.fromDegrees(54)),
+		SCORING(					Rotation2d.fromDegrees(40.5)),
+		AUTON_SCORING(				Rotation2d.fromDegrees(39.5)),
+		AUTON_SCORING_BLUE_STATES(	Rotation2d.fromDegrees(39.5)),
+		HATTING_HIGH(				Rotation2d.fromDegrees(33.5)),
+		HATTING_MID(				Rotation2d.fromDegrees(30.5));
 
 		public final Rotation2d rotation;
 

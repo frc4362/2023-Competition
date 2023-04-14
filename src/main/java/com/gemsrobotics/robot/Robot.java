@@ -83,7 +83,7 @@ public final class Robot extends TimedRobot {
 
     m_superstructure = Superstructure.getInstance();
 
-    // Copilot buttons
+    // Copilot buttons <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     m_joystickCopilot = new XboxController(Constants.COPILOT_PORT);
 
     m_pickupButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kA.value);
@@ -135,12 +135,15 @@ public final class Robot extends TimedRobot {
            () -> Intake.getInstance().setOuttakeType(Intake.TargetHeight.BOWLING)));
 
     // m_hatButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kLeftBumper.value);
-
+  
     m_clawOpenButton = new JoystickButton(m_joystickCopilot, XboxController.Button.kRightBumper.value);
     m_clawOpenButton.debounce(1., Debouncer.DebounceType.kRising);
     m_clawOpenButton.onTrue(Claw.getInstance().requestDropPiece());
 
-    // pilot controls
+    //} // End copilot controls <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    
+    // pilot controls <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     m_joystickPilot = new XboxController(Constants.PILOT_PORT);
 
     m_clearIntakeButton = new POVButton(m_joystickPilot, 0);
@@ -154,9 +157,6 @@ public final class Robot extends TimedRobot {
     m_resetFieldOrientationButton.debounce(Constants.DEBOUNCE_TIME_SECONDS, Debouncer.DebounceType.kRising);
 
     m_intakingButton = new JoystickButton(m_joystickPilot, XboxController.Button.kLeftBumper.value);
-//    final var intakeCommand = new InstantCommand(() -> Superstructure.getInstance().setWantedState(WantedState.INTAKING))
-//      .andThen(new WaitUntilCommand(Intake.getInstance()::isBeamBroken))
-//      .finallyDo(interrupted -> Superstructure.getInstance().setWantedState(WantedState.STOWED));
     final var intakeCommand = new IntakeUntilCubeCommand(Double.POSITIVE_INFINITY);
     m_intakingButton.onTrue(intakeCommand);
     m_intakingButton.onFalse(new InstantCommand(intakeCommand::cancel));
@@ -183,6 +183,8 @@ public final class Robot extends TimedRobot {
                 && (Intake.getInstance().getState() == Intake.State.OUTTAKING_MID || Intake.getInstance().getState() == Intake.State.OUTTAKING_HIGH);
             }
     );
+
+    // End pilot controls <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     m_autonChooser = new SendableChooser<>();
     m_autonChooser.addOption("None", new WaitCommand(1.0));

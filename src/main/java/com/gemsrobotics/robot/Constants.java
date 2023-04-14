@@ -55,9 +55,9 @@ public final class Constants {
         public static final double wheelCircumference = chosenModule.wheelCircumference;
 
         public static final Translation2d[] moduleTranslations = new Translation2d[]{
-                new Translation2d(wheelBase / 2.0, trackWidth / 2.0),
-                new Translation2d(wheelBase / 2.0, -trackWidth / 2.0),
-                new Translation2d(-wheelBase / 2.0, trackWidth / 2.0),
+                new Translation2d( wheelBase / 2.0,  trackWidth / 2.0),
+                new Translation2d( wheelBase / 2.0, -trackWidth / 2.0),
+                new Translation2d(-wheelBase / 2.0,  trackWidth / 2.0),
                 new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0)
         };
 

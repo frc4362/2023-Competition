@@ -49,18 +49,18 @@ public class Intake implements Subsystem {
 	}
 
 	public enum State {
-		RETRACTED(0, 0.0, 0, false),
-		BALANCED(9_800, 0.0, 0, false),
-		MIDDLE(13_000, 0.0, 0, false), // 25 000
-		EXTENDED(29_850, 0.0, 0, false),
-		INTAKING(29_850, -0.4, .4, false), //e 0.05
-		OUTTAKING_HIGH(0, .74, -0.59, false),
-		OUTTAKING_HIGH_AUTO(0, 0.9, -0.8, false),
-		OUTTAKING_MID(0, 0.32, -0.36, true),
-		OUTTAKING_HYBRID(15_000, 0.15,-0.15, true),
-		OUTTAKING_BOWLING(7_000, 1.0, -1.0, true),
-		CLEAR_INTAKE(25_000, 0.5, -0.5, true),
-		CENTER(0, -1.0, 1.0, false);
+		RETRACTED(			0, 		0.0,	0.0,	 false),
+		BALANCED(			9_800,	0.0,	0.0,	 false),
+		MIDDLE(				13_000, 	0.0, 0.0,	 false), // 25 000
+		EXTENDED(			29_850,	0.0, 0.0,	 false),
+		INTAKING(			29_850,	-0.4,  0.4,	 false), //e 0.05
+		OUTTAKING_HIGH(		0,	 	0.74, -0.59, false),
+		OUTTAKING_HIGH_AUTO(0, 		0.9,  -0.8,  false),
+		OUTTAKING_MID(		0, 		0.32, -0.36, true),
+		OUTTAKING_HYBRID(	15_000,  0.15, -0.15, true),
+		OUTTAKING_BOWLING(	7_000, 	1.0,  -1.0,  true),
+		CLEAR_INTAKE(		25_000, 	0.5,  -0.5,  true),
+		CENTER(				0, 		-1.0,	1.0,   false);
 
 		public static final double TICKS_PER_DEGREE = (EXTENDED.ticks - 4_700) / 90.0;
 
@@ -139,7 +139,7 @@ public class Intake implements Subsystem {
 
 		m_beamBreak = new DigitalInput(9);
 		m_beamAverage = 0.0;
-		m_filter = LinearFilter.movingAverage(5);
+		m_filter = LinearFilter.movingAverage(1);
 		m_cubeOffset = Optional.empty();
 
 		m_mode = Mode.DISABLED;

@@ -81,16 +81,16 @@ public final class Elevator implements Subsystem {
 
 	// Units are in meters off of the bottom of the elevator
 	public enum Position {
-		TRUE_BOTTOM(0.0),
-		SAFETY_BOTTOM(0.005),
-		FRONT_SAFETY(.1),
-		SHELF_PICKUP(.615),//.554//.639
-		SCORING_MID(0.855),//0.895
-		SCORING_HIGH(1.39),//1.38
-		AUTON_SCORING_HIGH(1.37),//1.38
-		AUTON_SCORING_HIGH_BLUE(1.35),//1.38
-		SAFETY_TOP(1.39),
-		TRUE_TOP(1.39); // meters
+		TRUE_BOTTOM(				0.0),
+		SAFETY_BOTTOM(				0.005),
+		FRONT_SAFETY(				0.1),
+		SHELF_PICKUP(				0.615),//.554//.639
+		SCORING_MID(				0.855),//0.895
+		SCORING_HIGH(				1.39),//1.38
+		AUTON_SCORING_HIGH(			1.37),//1.38
+		AUTON_SCORING_HIGH_BLUE(	1.35),//1.38
+		SAFETY_TOP(					1.39),
+		TRUE_TOP(					1.39);
 
 		public final double extensionMeters;
 

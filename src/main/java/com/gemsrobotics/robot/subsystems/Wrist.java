@@ -65,21 +65,21 @@ public final class Wrist implements Subsystem {
 	}
 
 	// This is in angle relative to the elevator
-	// Negative numbers are forwards from the elevator
+	// Negative numbers are forwards from the elevator nearer to the intake
 	public enum Position {
-		STARTING(230.0 / 360.0), //-54
-		PRELOAD(30.0 / 360.0),
-		HYBRID_CUBE(170 / 360.0),
-		HYBRID_CONE(180 / 360.0),
-		SCORING_MID(-16.0 / 360.0),
-		SCORING_HIGH(-16.0 / 360.0),
-		HALF_HAT(-20 / 360.0),
-		HAT(-46 / 360.0),
-		SHELF_PICKUP(-49 / 360.0),
-		CLEAR(-4 / 360.0),
-		STOWED_SHUTOFF(205.0 / 360.0),
-		STOWED_HIGH(10 / 360.0),
-		STOWED(210.0 / 360.0);
+		STARTING(		230.0 / 360.0), //-54
+		PRELOAD(		30.0 / 360.0),
+		HYBRID_CUBE(	170 / 360.0),
+		HYBRID_CONE(	180 / 360.0),
+		SCORING_MID(	-16.0 / 360.0),
+		SCORING_HIGH(	-16.0 / 360.0),
+		HALF_HAT(		-20 / 360.0),
+		HAT(			-46 / 360.0),
+		SHELF_PICKUP(	-49 / 360.0),
+		CLEAR(			-4 / 360.0),
+		STOWED_SHUTOFF(	205.0 / 360.0),
+		STOWED_HIGH(	10 / 360.0),
+		STOWED(			210.0 / 360.0);
 
 		public final double rotation;
 
