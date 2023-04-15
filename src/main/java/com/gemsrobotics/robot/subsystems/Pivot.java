@@ -124,7 +124,9 @@ public class Pivot implements Subsystem {
 	}
 
 	public void scrubSetpoint(final double rateDegrees) {
-		m_reference = m_reference.plus(Rotation2d.fromDegrees(rateDegrees));
+		//Note this plus limits the range of our output to +/-PI
+		//m_reference = m_reference.plus(Rotation2d.fromDegrees(rateDegrees));
+		m_reference = Rotation2d.fromDegrees(m_reference.getDegrees()+rateDegrees);
 	}
 
 	@Override

@@ -378,7 +378,7 @@ public final class Superstructure implements Subsystem {
 			} else if (poseType.map(type -> type == SuperstructurePose.Type.PLACEMENT).orElse(false)
 						&& m_claw.isOpening()//m_claw.getObservedPiece().isEmpty()
 			) {
-				//goes abck to stow after we place gamepeice
+				//goes back to stow after we place gamepeice
 
 				m_wantHighStow = true; // sets wether we want to doa high stow
 				setWantedState(WantedState.STOWED);

@@ -308,7 +308,7 @@ public final class Robot extends TimedRobot {
 
     final var pivotScrub = MathUtil.applyDeadband(-m_joystickCopilot.getLeftY(), 0.8);
     if (pivotScrub != 0) {
-      Pivot.getInstance().scrubSetpoint(pivotScrub * 10.0 / 50.0);
+      Pivot.getInstance().scrubSetpoint(pivotScrub * 10.0 / 50.0); // 1000ms / 20ms = 50.0
     }
   }
 }
