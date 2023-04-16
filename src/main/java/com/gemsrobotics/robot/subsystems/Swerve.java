@@ -306,8 +306,8 @@ public final class Swerve implements Subsystem {
 
     public void log() {
         for (final var mod : m_swerveModules) {
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
+//            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
+//            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
         }
     }
@@ -343,23 +343,8 @@ public final class Swerve implements Subsystem {
         // pose estimation
         m_swervePoseEstimator.updateWithTime(Timer.getFPGATimestamp(), getYaw(), getModulePositions());
 
-//        if (Constants.Features.DO_VISION_FILTER) {
-//            LimelightHelpers.getBotpose_wpiAlliance("").map(Pose3d::toPose2d).ifPresent(measurement -> {
-//                if (m_swervePoseEstimator.getEstimatedPosition().getTranslation().getDistance(measurement.getTranslation()) < Constants.VISION_OUTLIER_DISTANCE) {
-//                    final var imageCaptureTime = LimelightHelpers.getLatency_Cl("") / 1_000.0;
-//                    final var imageProcessTime = LimelightHelpers.getLatency_Pipeline("") / 1_000.0;
-//                    m_swervePoseEstimator.addVisionMeasurement(
-//                            measurement,
-//                            Timer.getFPGATimestamp() - (imageCaptureTime + imageProcessTime));
-//                }
-//            });
-//        }
-
-        // TODO does this even show up on the map at all lol
-//        final var FIELD = new Translation2d(15.980, 8.21);
-//        final var estimated = m_swervePoseEstimator.getEstimatedPosition();
-//        final var fixedPose = FIELD.minus(estimated.getTranslation());
-        m_fieldDisplay.setRobotPose(m_swervePoseEstimator.getEstimatedPosition());
+//        // TODO does this even show up on the map at all lol
+//        m_fieldDisplay.setRobotPose(m_swervePoseEstimator.getEstimatedPosition());
 
         SmartDashboard.putNumber("Yaw", m_imu.getYaw());
         SmartDashboard.putNumber("Pitch", m_imu.getPitch());

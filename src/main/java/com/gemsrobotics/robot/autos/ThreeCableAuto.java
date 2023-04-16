@@ -30,7 +30,7 @@ public class ThreeCableAuto extends SequentialCommandGroup {
 				new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.STARTING)),
 				new ParallelCommandGroup(
 						Claw.getInstance().requestGrab(),
-						new PlaceCommand(SuperstructurePose.AUTON_PLACE).andThen(new WaitCommand(1.0)).andThen(new IntakeUntilCubeCommand(2.0)),
+						new PlaceCommand(SuperstructurePose.AUTON_PLACE).andThen(new WaitCommand(1.)).andThen(new IntakeUntilCubeCommand(2.0)),
 						new WaitCommand(2.00).andThen(Swerve.getInstance().getTrackingCommand(path, true))
 				),
 				Swerve.getInstance().getStopCommand(),
@@ -38,11 +38,11 @@ public class ThreeCableAuto extends SequentialCommandGroup {
 				Swerve.getInstance().getOdometryResetOnVisionCommand(),
 				new ShootCommand(Intake.TargetHeight.HIGH, 0.25),
 				new ParallelCommandGroup(
-						new WaitCommand(2.00).andThen(new IntakeUntilCubeCommand(3.0)),
+						new WaitCommand(2.00).andThen(new IntakeUntilCubeCommand(2.5)),
 						Swerve.getInstance().getTrackingCommand(path2, false)
 				),
 				new CenterOnTagCommand(this::getAllianceOffset, allianceBasedStrafe),
-				new ShootCommand(Intake.TargetHeight.MID, 0.25),
+				new ShootCommand(Intake.TargetHeight.MID_AUTO, 0.25),
 				Swerve.getInstance().getStopCommand()
 		);
 	}

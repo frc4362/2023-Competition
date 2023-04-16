@@ -15,7 +15,7 @@ public class ThreeAndBalanceAuto extends SequentialCommandGroup {
 	public ThreeAndBalanceAuto() {
 		addCommands(
 				new ThreeAuto(),
-				new FeedbackBalanceCommand(),
+				new FeedbackBalanceCommand(false),
 				Swerve.getInstance().getStopCommand()
 		);
 	}

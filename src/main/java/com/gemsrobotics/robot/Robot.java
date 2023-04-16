@@ -190,18 +190,19 @@ public final class Robot extends TimedRobot {
     m_autonChooser.addOption("None", new WaitCommand(1.0));
     m_autonChooser.addOption("Auto balance auton", new BalanceAuto(Swerve.getInstance()));
     // m_autonChooser.addOption("Two.5 auton", new TwoAndBalanceAuto());
-    m_autonChooser.addOption("Three and balance auton", new AutoTimedWheelLock(new ThreeAndBalanceAuto(), 14.9));
+    m_autonChooser.addOption("Three and balance auton", new AutoTimedWheelLock(new ThreeAndBalanceAuto(), 15.2));
     m_autonChooser.addOption("Three and middle auton", new ThreeAndMidAuto());
     m_autonChooser.addOption("Cable auton", new ThreeCableAuto());
 //    m_autonChooser.addOption("Straight auton", new DriveStraightAuton());
-   m_autonChooser.addOption("Test balance auto", new FeedbackBalanceCommand());
+    m_autonChooser.addOption("Test balance auto", new FeedbackBalanceCommand(true));
 //    m_autonChooser.addOption("Test placement auto", new InstantCommand(() -> Superstructure.getInstance().setWantedState(Superstructure.WantedState.STARTING))
 //        .andThen(Claw.getInstance().requestGrab())
 //        .andThen(new PlaceCommand(SuperstructurePose.AUTON_PLACE)));
-   m_autonChooser.addOption("Test Cube Shoot auto",
+    m_autonChooser.addOption("Test Cube Shoot auto",
            new CenterOnTagCommand(() -> 0.0, () -> new Translation2d(0.0, 0.0))
              .andThen(new WaitCommand(0.1))
              .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
+    m_autonChooser.addOption("2.5 Auto", new TwoAndBalanceAuto());
     m_autonChooser.addOption("AprilTag localization test", Swerve.getInstance().getOdometryResetOnVisionCommand());
 
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
@@ -229,6 +230,7 @@ public final class Robot extends TimedRobot {
 //    Elevator.getInstance().log();
 //     Wrist.getInstance().log();
     Claw.getInstance().log();
+    Swerve.getInstance().log();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

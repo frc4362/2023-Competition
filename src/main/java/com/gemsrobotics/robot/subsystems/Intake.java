@@ -33,7 +33,7 @@ public class Intake implements Subsystem {
 
 	private static final int DRIVE_MOTOR_ID = 20;
 	private static final String DRIVE_MOTOR_BUS = Constants.CANBusses.MAIN;
-	private static final double kP = 0.028; // 0.018
+	private static final double kP = 0.045; // 0.018
 	private static final double kG = -0.45 / 12.0; // convert to duty cycle
 
 	private static final Rotation2d TOLERANCE = Rotation2d.fromDegrees(4.0);
@@ -56,7 +56,8 @@ public class Intake implements Subsystem {
 		INTAKING(			29_850,	-0.4,  0.4,	 false), //e 0.05
 		OUTTAKING_HIGH(		0,	 	0.74, -0.59, false),
 		OUTTAKING_HIGH_AUTO(0, 		0.9,  -0.8,  false),
-		OUTTAKING_MID(		0, 		0.32, -0.36, true),
+		OUTTAKING_MID_AUTO(		0, 		0.45, -0.39, true),
+		OUTTAKING_MID(		7_000, 		0.40, -0.33, true),
 		OUTTAKING_HYBRID(	15_000,  0.15, -0.15, true),
 		OUTTAKING_BOWLING(	7_000, 	1.0,  -1.0,  true),
 		CLEAR_INTAKE(		25_000, 	0.5,  -0.5,  true),
@@ -81,6 +82,7 @@ public class Intake implements Subsystem {
 		HIGH(State.OUTTAKING_HIGH),
 		HIGH_AUTO(State.OUTTAKING_HIGH_AUTO),
 		MID(State.OUTTAKING_MID),
+		MID_AUTO(State.OUTTAKING_MID_AUTO),
 		HYBRID(State.OUTTAKING_HYBRID),
 		CLEAR_INTAKE(State.CLEAR_INTAKE),
 		BOWLING(State.OUTTAKING_BOWLING);
@@ -139,7 +141,7 @@ public class Intake implements Subsystem {
 
 		m_beamBreak = new DigitalInput(9);
 		m_beamAverage = 0.0;
-		m_filter = LinearFilter.movingAverage(1);
+		m_filter = LinearFilter.movingAverage(5);
 		m_cubeOffset = Optional.empty();
 
 		m_mode = Mode.DISABLED;
@@ -172,7 +174,7 @@ public class Intake implements Subsystem {
 	}
 
 	public boolean isTargetHybridOrBowling() {
-		return (m_height==Intake.TargetHeight.HYBRID || m_height==Intake.TargetHeight.BOWLING);
+		return (m_height == Intake.TargetHeight.HYBRID || m_height == Intake.TargetHeight.BOWLING);
 	}
 
 	public Rotation2d getApproximateAngle() {

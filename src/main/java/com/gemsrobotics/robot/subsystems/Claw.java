@@ -144,22 +144,17 @@ public final class Claw implements Subsystem {
 	}
 
 	public Optional<ObservedPiece> getObservedPiece() {
-		//if (Math.abs(m_motorGrip.getDrawnCurrentAmps()) < PIECE_GRIPPED_THRESHOLD_AMPS) {
 		if (Math.abs(m_filterValue) < PIECE_GRIPPED_THRESHOLD_AMPS) {
 			return Optional.empty();
 		}
 
 		if (m_motorGrip.getPositionRotations() < NOTHING_THRESHOLD_ROTATIONS) {
 			return Optional.empty();
-		} else {
+		} else if (m_motorGrip.getPositionRotations() < CONE_THRESHOLD_ROTATIONS) {
 			return Optional.of(ObservedPiece.CONE);
+		} else {
+			return Optional.of(ObservedPiece.CUBE);
 		}
-		
-		// if (m_motorGrip.getPositionRotations() < CONE_THRESHOLD_ROTATIONS) {
-		// 	return Optional.of(ObservedPiece.CONE);
-		// } else {
-		// 	return Optional.of(ObservedPiece.CUBE);
-		// }
 	}
 
 	public boolean getPieceConfidence() {

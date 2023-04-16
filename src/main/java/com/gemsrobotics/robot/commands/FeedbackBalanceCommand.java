@@ -10,14 +10,22 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 
 public class FeedbackBalanceCommand extends SequentialCommandGroup {
-    public FeedbackBalanceCommand() {
+    private final boolean m_flipped;
+
+    public FeedbackBalanceCommand(final boolean flipped) {
+        m_flipped = flipped;
+
         addCommands(
-            new InstantCommand(() -> Swerve.getInstance().setDrivePercent(new Translation2d(1.0, 0.0), 0, true, true)),
-            Swerve.getInstance().waitForPitchAround(Rotation2d.fromDegrees(13.0)),
-            new InstantCommand(() -> Swerve.getInstance().setDrivePercent(new Translation2d(0.25, 0.0), 0, true, true)),
-            Swerve.getInstance().waitForPitchAround(Rotation2d.fromDegrees(11.0)),
+            new InstantCommand(() -> Swerve.getInstance().setDrivePercent(new Translation2d(0.6 * getFlipMultiplier(), 0.0), 0, true, true)),
+            Swerve.getInstance().waitForPitchAround(Rotation2d.fromDegrees(13 * getFlipMultiplier())),
+            new InstantCommand(() -> Swerve.getInstance().setDrivePercent(new Translation2d(0.15 * getFlipMultiplier(), 0.0), 0, true, true)),
+            Swerve.getInstance().waitForPitchAround(Rotation2d.fromDegrees(11.3 * getFlipMultiplier())),
             Swerve.getInstance().getStopCommand(),
             new InstantCommand(Swerve.getInstance()::setWheelLock)
         );
+    }
+
+    public double getFlipMultiplier() {
+        return m_flipped ? -1.0 : 1.0;
     }
 }
