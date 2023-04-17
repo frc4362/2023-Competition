@@ -173,8 +173,11 @@ public class Intake implements Subsystem {
 		m_height = height;
 	}
 
-	public boolean isTargetHybridOrBowling() {
-		return (m_height == Intake.TargetHeight.HYBRID || m_height == Intake.TargetHeight.BOWLING);
+	public boolean isIntakeForwardWhileOutaking() {
+		return (m_height == Intake.TargetHeight.HYBRID || 
+				m_height == Intake.TargetHeight.BOWLING || 
+				m_height == Intake.TargetHeight.MID
+				);
 	}
 
 	public Rotation2d getApproximateAngle() {
