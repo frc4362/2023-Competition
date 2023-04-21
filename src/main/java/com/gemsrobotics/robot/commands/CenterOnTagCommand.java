@@ -18,7 +18,7 @@ import static java.lang.Math.abs;
 public class CenterOnTagCommand extends SequentialCommandGroup {
 	private final static double TOLERANCE = 3; // degrees
 	// meters per second per degree
-	private final static double kP = 1.0 / 300.0;
+	private final static double kP = 1.0 / 450.0;
 
 	private final Supplier<Double> m_offset;
 
@@ -36,7 +36,7 @@ public class CenterOnTagCommand extends SequentialCommandGroup {
 							Units.degrees2Rads(180)
 					);
 
-					final double depthFeedback = 4.5 * ((LimelightHelpers.getTA("")/100.0) - 0.057);
+					final double depthFeedback = 4.5 * ((LimelightHelpers.getTA("")/100.0) - 0.055);
 
 					Swerve.getInstance().setDrivePercent(new Translation2d(depthFeedback, visionFeedback), yawFeedback, true, true);
 				}).until(() -> abs(getError()) < TOLERANCE)

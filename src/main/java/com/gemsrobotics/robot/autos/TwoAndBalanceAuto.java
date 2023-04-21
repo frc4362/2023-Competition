@@ -25,7 +25,8 @@ public class TwoAndBalanceAuto extends SequentialCommandGroup {
 						new WaitCommand(0.1).andThen(Swerve.getInstance().getTrackingCommand(path2, false)),
 						new WaitCommand(1.25).andThen(new IntakeUntilCubeCommand(2.0))
 				),
-				new FeedbackBalanceCommand(true),
+				Swerve.getInstance().getStopCommand(),
+				// new FeedbackBalanceCommand(true),
 				new InstantCommand(Swerve.getInstance()::setWheelLock)
 		);
 	}

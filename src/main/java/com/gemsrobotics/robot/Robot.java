@@ -202,7 +202,7 @@ public final class Robot extends TimedRobot {
            new CenterOnTagCommand(() -> 0.0, () -> new Translation2d(0.0, 0.0))
              .andThen(new WaitCommand(0.1))
              .andThen(new ShootCommand(Intake.TargetHeight.HIGH_AUTO, 0.5)));
-    m_autonChooser.addOption("2.5 Auto", new TwoAndBalanceAuto());
+    m_autonChooser.addOption("2.5 Auto NO BALANCE CHANGE LATER", new TwoAndBalanceAuto());
     m_autonChooser.addOption("AprilTag localization test", Swerve.getInstance().getOdometryResetOnVisionCommand());
 
       // .andThen(new AttainPoseCommand(SuperstructurePose.MID_PLACE))
