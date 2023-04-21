@@ -22,11 +22,11 @@ public class TwoAndBalanceAuto extends SequentialCommandGroup {
 				),
 				new ParallelCommandGroup(
 						new ShootCommand(Intake.TargetHeight.HIGH, 0.25),
-						new WaitCommand(0.1).andThen(Swerve.getInstance().getTrackingCommand(path2, false)),
+						new WaitCommand(0.1).andThen(Swerve.getInstance().getTrackingCommand(path2, false)).andThen(Swerve.getInstance().getStopCommand()),
 						new WaitCommand(1.25).andThen(new IntakeUntilCubeCommand(2.0))
 				),
-				Swerve.getInstance().getStopCommand(),
-				// new FeedbackBalanceCommand(true),
+				// Swerve.getInstance().getStopCommand(),
+				new FeedbackBalanceCommand(true),
 				new InstantCommand(Swerve.getInstance()::setWheelLock)
 		);
 	}
