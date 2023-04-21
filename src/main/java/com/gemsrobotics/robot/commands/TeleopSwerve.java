@@ -75,6 +75,9 @@ public final class TeleopSwerve extends CommandBase {
 
     @Override
     public void execute() {
+        // m_swerve.setWheelLock();
+        // return;
+
         if (m_pickUping.getAsBoolean()) {
             m_startPickupTime = Timer.getFPGATimestamp();
         }

@@ -204,13 +204,14 @@ public final class Claw implements Subsystem {
 	}
 
 	public void log() {
-		SmartDashboard.putNumber("Claw Grip Rotations", m_motorGrip.getPositionRotations());
-		SmartDashboard.putNumber("Claw Grip Drawn Amps", m_motorGrip.getDrawnCurrentAmps());
-//		SmartDashboard.putNumber("Claw Grip Control Effort", m_motorGrip.getVoltageOutput());
-		SmartDashboard.putString("Claw Observed Piece", getObservedPiece().map(ObservedPiece::toString).orElse("NONE"));
-//		SmartDashboard.putBoolean("Claw Force Closed", m_forceGrip);
-//		SmartDashboard.putString("Claw State", m_goal.toString());
-		SmartDashboard.putNumber("Drive Position", m_motorDrive.getPositionRotations());
+		SmartDashboard.putString("Claw State", m_goal.name());
+// 		SmartDashboard.putNumber("Claw Grip Rotations", m_motorGrip.getPositionRotations());
+// 		SmartDashboard.putNumber("Claw Grip Drawn Amps", m_motorGrip.getDrawnCurrentAmps());
+// //		SmartDashboard.putNumber("Claw Grip Control Effort", m_motorGrip.getVoltageOutput());
+// 		SmartDashboard.putString("Claw Observed Piece", getObservedPiece().map(ObservedPiece::toString).orElse("NONE"));
+// //		SmartDashboard.putBoolean("Claw Force Closed", m_forceGrip);
+// //		SmartDashboard.putString("Claw State", m_goal.toString());
+// 		SmartDashboard.putNumber("Drive Position", m_motorDrive.getPositionRotations());
 	}
 
 	@Override

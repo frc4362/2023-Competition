@@ -36,7 +36,12 @@ public class CenterOnTagCommand extends SequentialCommandGroup {
 							Units.degrees2Rads(180)
 					);
 
-					final double depthFeedback = 4.5 * ((LimelightHelpers.getTA("")/100.0) - 0.055);
+					final double depthFeedback;
+					if (LimelightHelpers.getTA("") == 0) {
+						depthFeedback = 0.0;
+					} else {
+						depthFeedback = 4.5 * ((LimelightHelpers.getTA("")/100.0) - 0.055);
+					}
 
 					Swerve.getInstance().setDrivePercent(new Translation2d(depthFeedback, visionFeedback), yawFeedback, true, true);
 				}).until(() -> abs(getError()) < TOLERANCE)

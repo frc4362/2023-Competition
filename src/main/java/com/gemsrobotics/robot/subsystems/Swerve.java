@@ -295,14 +295,24 @@ public final class Swerve implements Subsystem {
 
     
     public void setWheelLock() {
+        
         setModuleStates(new SwerveModuleState[] {
-                new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
-                new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
-                new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
-                new SwerveModuleState(0, Rotation2d.fromDegrees(45))
-            }
-        );   
-    }
+            new SwerveModuleState(0, Rotation2d.fromDegrees(0)),
+            new SwerveModuleState(0, Rotation2d.fromDegrees(0)),
+            new SwerveModuleState(0, Rotation2d.fromDegrees(0)),
+            new SwerveModuleState(0, Rotation2d.fromDegrees(0))
+        }
+    );
+    }   
+
+    //     setModuleStates(new SwerveModuleState[] {
+    //             new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
+    //             new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
+    //             new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
+    //             new SwerveModuleState(0, Rotation2d.fromDegrees(45))
+    //         }
+    //     );   
+    // }
 
     public void log() {
         for (final var mod : m_swerveModules) {
