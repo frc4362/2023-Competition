@@ -53,13 +53,13 @@ public class Intake implements Subsystem {
 		//lower tick value is higher angle
 		RETRACTED(			0, 		0.0,	0.0,	 false),
 		BALANCED(			9_800,	0.0,	0.0,	 false),
-		MIDDLE(				13_000, 	0.0, 0.0,	 false), // 25 000
+		MIDDLE(				13_000, 	0.0, 0.0,	 false), // 25 000 pose for placing
 		EXTENDED(			29_850,	0.0, 0.0,	 false),
 		INTAKING(			29_850,	-0.4,  0.4,	 false), //e 0.05
-		OUTTAKING_HIGH(		0,	 	0.74, -0.59, false),
+		OUTTAKING_HIGH(		0,	 	0.78, -0.66, false),
 		OUTTAKING_HIGH_AUTO(0, 		0.9,  -0.8,  false),
 		OUTTAKING_MID_AUTO(		0, 		0.45, -0.39, true),
-		OUTTAKING_MID(		6_500, 		0.40, -0.33, true), //t: 7_000
+		OUTTAKING_MID(		6_500, 		0.43, -0.36, true), //t: 7_000
 		OUTTAKING_HYBRID(	15_000,  0.15, -0.15, true),
 		OUTTAKING_BOWLING(	7_000, 	1.0,  -1.0,  true),
 		CLEAR_INTAKE(		25_000, 	0.5,  -0.5,  true),

@@ -53,9 +53,9 @@ public class ThreeCableAuto extends SequentialCommandGroup {
 
 	private double getAllianceOffset() {
 		if (DriverStation.getAlliance() == Alliance.Red) {
-			return -6.0;
+			return -3.0;
 		} else {
-			return 6.0;
+			return 3.0;
 		}
 	}
 }
