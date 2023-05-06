@@ -88,7 +88,7 @@ public final class Elevator implements Subsystem {
 		SCORING_MID(				0.855),//0.895
 		SCORING_HIGH(				1.39),//1.38
 		AUTON_SCORING_HIGH(			1.35),//1.38 states 1.37
-		AUTON_SCORING_HIGH_BLUE(	1.35),//1.38 states 1.35
+		AUTON_SCORING_HIGH_BLUE(	1.37),//1.38 states 1.35
 		SAFETY_TOP(					1.39),
 		TRUE_TOP(					1.39);
 
