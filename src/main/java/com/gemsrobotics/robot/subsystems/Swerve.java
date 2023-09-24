@@ -58,10 +58,14 @@ public final class Swerve implements Subsystem {
     private double m_deltaPitchAverage;
     private double m_lastPitch;
 
+    private Rotation2d m_gyroOffset;
+
     public Swerve() {
         m_imu = new Pigeon2(Constants.Swerve.pigeonID);
         m_imu.configFactoryDefault();
         m_imu.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_6_SensorFusion, 5);
+
+        m_gyroOffset = Rotation2d.fromDegrees(0);
 
         // old
         m_swerveModules = List.of(
@@ -225,11 +229,16 @@ public final class Swerve implements Subsystem {
     }
 
     public void zeroGyro() {
-        m_imu.setYaw(0);
+//        m_imu.setYaw(0);
+
+        //artificial zero
+        final var baseYaw = (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - m_imu.getYaw()) : Rotation2d.fromDegrees(m_imu.getYaw());
+        m_gyroOffset = baseYaw;
     }
 
     public Rotation2d getYaw() {
-        return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - m_imu.getYaw()) : Rotation2d.fromDegrees(m_imu.getYaw());
+        final var baseYaw = (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - m_imu.getYaw()) : Rotation2d.fromDegrees(m_imu.getYaw());
+        return baseYaw.minus(m_gyroOffset);
     }
 
     public Rotation2d getPitch() {

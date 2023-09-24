@@ -128,23 +128,23 @@ public final class TeleopSwerve extends CommandBase {
          * When picking we use the flipped direction
          * Otherwise we allow normal control of rotation
          */
-//        final double rotationModifier;
-//        if (Superstructure.getInstance().doPickupYaw()) {
-//            rotationModifier = Constants.Generation.pureThetaController.calculate(
-//                    m_swerve.getYaw().getRadians(),
-//                    Units.degrees2Rads(0)
-//            );
-//        } else if (m_placing.getAsBoolean() || m_doCubeYawLock.getAsBoolean()) {
-//            rotationModifier = Constants.Generation.pureThetaController.calculate(
-//                    m_swerve.getYaw().getRadians(),
-//                    Units.degrees2Rads(180)
-//            );
-//        } else {
-//            rotationModifier = openLoopRotation;
-//        }
+        final double rotationModifier;
+        if (Superstructure.getInstance().doPickupYaw()) {
+            rotationModifier = Constants.Generation.pureThetaController.calculate(
+                    m_swerve.getYaw().getRadians(),
+                    Units.degrees2Rads(0)
+            );
+        } else if (m_placing.getAsBoolean() || m_doCubeYawLock.getAsBoolean()) {
+            rotationModifier = Constants.Generation.pureThetaController.calculate(
+                    m_swerve.getYaw().getRadians(),
+                    Units.degrees2Rads(180)
+            );
+        } else {
+            rotationModifier = openLoopRotation;
+        }
 
-        // pickup and placement yaw control temporarily disabled
-        final double rotationModifier = openLoopRotation;
+//        // pickup and placement yaw control temporarily disabled
+//        final double rotationModifier = openLoopRotation;
 
         final var doEvasion = !Superstructure.getInstance().doPickupYaw() && !m_placing.getAsBoolean() && m_doEvasionSup.getAsBoolean();
 
